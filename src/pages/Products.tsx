@@ -1,10 +1,12 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Search, ShoppingCart, Filter, Star, MessageCircle, ChevronDown, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Search, ShoppingCart, Star, MessageCircle, X, CreditCard, User, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import { useToast } from "@/hooks/use-toast";
 import equipmentImage from "@/assets/grinding-equipment.jpg";
+import React from "react";
+import api from "@/lib/api";
 
 interface Product {
   id: number;
@@ -13,79 +15,10 @@ interface Product {
   price: number;
   specs: string[];
   rating: number;
-  reviews: number;
-  inStock: boolean;
+  reviews_count: number;
+  in_stock: boolean;
   image: string;
 }
-
-const products: Product[] = [
-  {
-    id: 1,
-    name: "Plastic Grinder Pro X500",
-    category: "Penggiling",
-    price: 45000000,
-    specs: ["Kapasitas 500kg/jam", "Motor industri", "Sistem auto-feed"],
-    rating: 4.8,
-    reviews: 124,
-    inStock: true,
-    image: equipmentImage,
-  },
-  {
-    id: 2,
-    name: "Industrial Shredder S300",
-    category: "Pencacah",
-    price: 75000000,
-    specs: ["Pisau tugas berat", "300kg/jam", "Operasi rendah suara"],
-    rating: 4.9,
-    reviews: 89,
-    inStock: true,
-    image: equipmentImage,
-  },
-  {
-    id: 3,
-    name: "Compact Recycler Mini",
-    category: "Daur Ulang",
-    price: 25000000,
-    specs: ["Sempurna untuk UMKM", "Pengoperasian mudah", "Desain kompak"],
-    rating: 4.7,
-    reviews: 215,
-    inStock: true,
-    image: equipmentImage,
-  },
-  {
-    id: 4,
-    name: "Multi-Material Crusher MC200",
-    category: "Penghancur",
-    price: 55000000,
-    specs: ["Menangani berbagai material", "200kg/jam", "Fitur keselamatan"],
-    rating: 4.6,
-    reviews: 67,
-    inStock: false,
-    image: equipmentImage,
-  },
-  {
-    id: 5,
-    name: "Pelletizer Pro P100",
-    category: "Pelletizer",
-    price: 85000000,
-    specs: ["Output 100kg/jam", "Ukuran pelet dapat diatur", "Hemat energi"],
-    rating: 4.9,
-    reviews: 43,
-    inStock: true,
-    image: equipmentImage,
-  },
-  {
-    id: 6,
-    name: "Waste Compactor WC400",
-    category: "Kompak",
-    price: 35000000,
-    specs: ["Rasio kompresi 4:1", "Sistem hidrolik", "Unit mobile"],
-    rating: 4.5,
-    reviews: 98,
-    inStock: true,
-    image: equipmentImage,
-  },
-];
 
 const categories = ["Semua", "Penggiling", "Pencacah", "Daur Ulang", "Penghancur", "Pelletizer", "Kompak"];
 
@@ -97,12 +30,46 @@ const formatPrice = (price: number) => {
   }).format(price);
 };
 
+interface CheckoutForm {
+  name: string;
+  phone: string;
+  address: string;
+  notes: string;
+}
+
 const Products = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const [products, setProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [cart, setCart] = useState<{ product: Product; quantity: number }[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutForm, setCheckoutForm] = useState<CheckoutForm>({
+    name: "",
+    phone: "",
+    address: "",
+    notes: "",
+  });
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await api.get("/products/");
+      setProducts(res.data);
+    } catch (error) {
+      console.error("Failed to fetch products", error);
+      toast({
+        title: "Error",
+        description: "Gagal memuat produk",
+        variant: "destructive"
+      });
+    }
+  };
 
   const filteredProducts = products.filter((product) => {
     const matchesCategory = selectedCategory === "Semua" || product.category === selectedCategory;
@@ -134,14 +101,53 @@ const Products = () => {
   const cartTotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  const handleWhatsAppOrder = () => {
-    const orderDetails = cart
-      .map((item) => `- ${item.product.name} x${item.quantity}`)
-      .join("\n");
-    const message = encodeURIComponent(
-      `Halo ResikPlus! Saya ingin memesan:\n\n${orderDetails}\n\nTotal: ${formatPrice(cartTotal)}`
-    );
-    window.open(`https://wa.me/6281234567890?text=${message}`, "_blank");
+  const handleCheckoutSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!checkoutForm.name.trim() || !checkoutForm.phone.trim() || !checkoutForm.address.trim()) {
+      toast({
+        title: "Mohon lengkapi data",
+        description: "Nama, nomor telepon, dan alamat wajib diisi.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Generate order ID
+    const orderId = `INV-${Date.now().toString(36).toUpperCase()}`;
+    const orderDate = new Date().toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Prepare order data for confirmation page
+    const orderData = {
+      orderId,
+      orderDate,
+      customerName: checkoutForm.name.trim(),
+      customerPhone: checkoutForm.phone.trim(),
+      customerAddress: checkoutForm.address.trim(),
+      customerNotes: checkoutForm.notes.trim(),
+      items: cart.map((item) => ({
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+      total: cartTotal,
+    };
+
+    // Reset state
+    setCart([]);
+    setCheckoutForm({ name: "", phone: "", address: "", notes: "" });
+    setShowCheckout(false);
+    setShowCart(false);
+
+    // Navigate to confirmation page
+    navigate("/order-confirmation", { state: orderData });
   };
 
   return (
@@ -154,10 +160,10 @@ const Products = () => {
               Peralatan Daur Ulang Profesional
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-              Temukan berbagai peralatan penggiling, pencacah, dan daur ulang kelas industri 
+              Temukan berbagai peralatan penggiling, pencacah, dan daur ulang kelas industri
               yang dirancang untuk efisiensi dan ketahanan maksimal.
             </p>
-            
+
             {/* Search */}
             <div className="relative max-w-xl mx-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -182,11 +188,10 @@ const Products = () => {
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                    selectedCategory === category
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-primary/10"
-                  }`}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-primary/10"
+                    }`}
                 >
                   {category}
                 </button>
@@ -220,7 +225,7 @@ const Products = () => {
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  {!product.inStock && (
+                  {!product.in_stock && (
                     <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
                       <span className="px-4 py-2 rounded-full bg-background text-foreground font-medium">
                         Stok Habis
@@ -236,24 +241,24 @@ const Products = () => {
                     <div className="flex items-center gap-1 text-sm">
                       <Star className="w-4 h-4 fill-accent text-accent" />
                       <span className="text-foreground">{product.rating}</span>
-                      <span className="text-muted-foreground">({product.reviews})</span>
+                      <span className="text-muted-foreground">({product.reviews_count})</span>
                     </div>
                   </div>
-                  
+
                   <h3 className="text-lg font-semibold text-foreground mb-2">{product.name}</h3>
-                  
+
                   <ul className="space-y-1 mb-4">
                     {product.specs.map((spec, index) => (
                       <li key={index} className="text-sm text-muted-foreground">• {spec}</li>
                     ))}
                   </ul>
-                  
+
                   <div className="flex items-center justify-between pt-4 border-t border-border">
                     <span className="text-xl font-bold text-primary">{formatPrice(product.price)}</span>
                     <Button
                       size="sm"
                       onClick={() => addToCart(product)}
-                      disabled={!product.inStock}
+                      disabled={!product.in_stock}
                     >
                       Tambah
                     </Button>
@@ -325,20 +330,115 @@ const Products = () => {
                     <span className="font-bold text-primary">{formatPrice(cartTotal)}</span>
                   </div>
                   <Button
-                    variant="whatsapp"
                     size="xl"
                     className="w-full"
-                    onClick={handleWhatsAppOrder}
+                    onClick={() => setShowCheckout(true)}
                   >
-                    <MessageCircle className="w-5 h-5" />
-                    Pesan via WhatsApp
+                    <CreditCard className="w-5 h-5" />
+                    Lanjutkan Checkout
                   </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Klik untuk mengirim pesanan langsung ke WhatsApp kami
-                  </p>
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Checkout Modal */}
+      {showCheckout && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-foreground/50" onClick={() => setShowCheckout(false)} />
+          <div className="relative w-full max-w-lg bg-background rounded-2xl shadow-xl animate-fade-in max-h-[90vh] overflow-auto">
+            <div className="flex items-center justify-between p-6 border-b border-border">
+              <h2 className="text-xl font-bold text-foreground">Checkout Pesanan</h2>
+              <button onClick={() => setShowCheckout(false)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCheckoutSubmit} className="p-6 space-y-5">
+              {/* Order Summary */}
+              <div className="p-4 rounded-xl bg-secondary/30 space-y-2">
+                <h3 className="font-semibold text-foreground mb-3">Ringkasan Pesanan</h3>
+                {cart.map((item) => (
+                  <div key={item.product.id} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{item.product.name} x{item.quantity}</span>
+                    <span className="text-foreground">{formatPrice(item.product.price * item.quantity)}</span>
+                  </div>
+                ))}
+                <div className="pt-2 mt-2 border-t border-border flex justify-between font-semibold">
+                  <span className="text-foreground">Total</span>
+                  <span className="text-primary">{formatPrice(cartTotal)}</span>
+                </div>
+              </div>
+
+              {/* Buyer Info */}
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                  <User className="w-4 h-4" />
+                  Nama Lengkap *
+                </label>
+                <input
+                  type="text"
+                  value={checkoutForm.name}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, name: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="Masukkan nama lengkap"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                  <Phone className="w-4 h-4" />
+                  Nomor Telepon *
+                </label>
+                <input
+                  type="tel"
+                  value={checkoutForm.phone}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, phone: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  placeholder="+62 812 3456 7890"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-2">
+                  <MapPin className="w-4 h-4" />
+                  Alamat Pengiriman *
+                </label>
+                <textarea
+                  value={checkoutForm.address}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, address: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  placeholder="Alamat lengkap untuk pengiriman"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  Catatan Tambahan (Opsional)
+                </label>
+                <textarea
+                  value={checkoutForm.notes}
+                  onChange={(e) => setCheckoutForm({ ...checkoutForm, notes: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+                  placeholder="Catatan untuk pesanan..."
+                />
+              </div>
+
+              <Button type="submit" variant="whatsapp" size="xl" className="w-full">
+                <MessageCircle className="w-5 h-5" />
+                Kirim Pesanan via WhatsApp
+              </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Data pesanan Anda akan dikirim ke WhatsApp untuk konfirmasi
+              </p>
+            </form>
           </div>
         </div>
       )}
@@ -351,7 +451,7 @@ const Products = () => {
             Kami menawarkan solusi khusus untuk kebutuhan daur ulang spesifik Anda. Hubungi tim sales kami.
           </p>
           <Button variant="heroOutline" size="xl" asChild>
-            <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/6281288866107" target="_blank" rel="noopener noreferrer">
               <MessageCircle className="w-5 h-5" />
               Chat dengan Sales
             </a>

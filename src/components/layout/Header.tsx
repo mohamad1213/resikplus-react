@@ -3,13 +3,14 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import logoResikplus from "@/assets/logo-resikplus.jpg";
+import logoResikplus from "@/assets/logo-resikplus2.png";
 
 const navigation = [
   { name: "Beranda", href: "/" },
   { name: "Edukasi", href: "/education" },
   { name: "Kursus", href: "/courses" },
   { name: "Mitra", href: "/partners" },
+  { name: "Angkut Sampah", href: "/waste-pickup" },
   { name: "Berita", href: "/news" },
   { name: "Produk", href: "/products" },
 ];
@@ -22,14 +23,17 @@ const Header = () => {
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <nav className="container-wide section-padding !py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-3 group">
-          <img 
-            src={logoResikplus} 
-            alt="ResikPlus Logo" 
+          <img
+            src={logoResikplus}
+            alt="ResikPlus Logo"
             className="h-12 w-auto object-contain group-hover:scale-105 transition-transform"
           />
           <span className="text-xl font-bold text-primary">
             RESIKPLUS
           </span>
+          {/* <span className="text-SM font-bold text-primary">
+            RUANG EDUKASI SOLUSI INOVASI KREATIF PALING LUWES UNTUK SEMUA
+          </span> */}
         </Link>
 
         {/* Desktop Navigation */}
@@ -52,7 +56,7 @@ const Header = () => {
 
         <div className="hidden lg:flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/6281288866107" target="_blank" rel="noopener noreferrer">
               Hubungi Kami
             </a>
           </Button>
@@ -91,7 +95,7 @@ const Header = () => {
             ))}
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
               <Button variant="outline" asChild>
-                <a href="https://wa.me/6281234567890" target="_blank" rel="noopener noreferrer">
+                <a href="https://wa.me/6281288866107" target="_blank" rel="noopener noreferrer">
                   Hubungi Kami
                 </a>
               </Button>

@@ -1,4 +1,4 @@
-import { useState, type FormEvent  } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Recycle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import logoResikplus from "@/assets/logo-resikplus.jpg";
-
+import { useEffect } from "react";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,7 +18,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -29,7 +29,12 @@ const Login = () => {
         title: "Login Berhasil",
         description: "Selamat datang di ResikPlus!",
       });
-      navigate("/admin");
+      // Allow a brief moment for state to update, or better yet, rely on AuthContext user state change in a useEffect if not available immediately. 
+      // However, AuthContext.login sets state. 
+      // Since we can't synchronously check 'user' here easily without waiting, 
+      // and checking result.success is just a boolean.
+      // Let's defer navigation to a useEffect listening to 'user'. 
+      // OR, we can assume if login success, the useEffect below (which I will add) handles it.
     } else {
       toast({
         title: "Login Gagal",
@@ -40,6 +45,19 @@ const Login = () => {
 
     setIsLoading(false);
   };
+
+  // Add useEffect for redirection
+  const { user } = useAuth(); // Destructure user
+
+  useEffect(() => {
+    if (user) {
+      if (user.is_staff || user.role === 'admin') {
+        navigate("/admin");
+      } else {
+        navigate("/customer");
+      }
+    }
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-primary/10 p-4">
@@ -52,9 +70,9 @@ const Login = () => {
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
             <div className="flex items-center gap-3">
-              <img 
-                src={logoResikplus} 
-                alt="ResikPlus Logo" 
+              <img
+                src={logoResikplus}
+                alt="ResikPlus Logo"
                 className="h-16 w-auto object-contain"
               />
               <span className="text-2xl font-bold text-primary">RESIKPLUS</span>
@@ -92,7 +110,6 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -103,14 +120,6 @@ const Login = () => {
               {isLoading ? "Memproses..." : "Masuk"}
             </Button>
           </form>
-
-          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Akun Demo:</p>
-            <div className="text-xs space-y-1">
-              <p><strong>Admin:</strong> admin@resikplus.com / admin123</p>
-              <p><strong>User:</strong> user@resikplus.com / user123</p>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

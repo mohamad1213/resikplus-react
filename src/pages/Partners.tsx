@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Users, Building2, User, CheckCircle } from "lucide-react";
+import { Users, Building2, User, CheckCircle, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import { useToast } from "@/hooks/use-toast";
-
+import React from "react";
 const partnerTypes = [
   { id: "individual", label: "Individu", icon: User, description: "Freelancer dan profesional" },
   { id: "sme", label: "UMKM", icon: Building2, description: "Usaha kecil dan menengah" },
@@ -30,10 +30,10 @@ const Partners = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.fullName || !formData.email || !formData.phone || !formData.partnerType) {
+
+    if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.partnerType) {
       toast({
         title: "Mohon lengkapi semua kolom yang diperlukan",
         variant: "destructive",
@@ -42,15 +42,29 @@ const Partners = () => {
     }
 
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
+
+    // Get partner type label
+    const partnerTypeLabel = partnerTypes.find(t => t.id === formData.partnerType)?.label || formData.partnerType;
+
+    // Create WhatsApp message
+    const message = encodeURIComponent(
+      `🤝 *PENDAFTARAN MITRA BARU - RESIKPLUS*\n\n` +
+      `👤 *Data Calon Mitra:*\n` +
+      `Nama: ${formData.fullName.trim()}\n` +
+      `Email: ${formData.email.trim()}\n` +
+      `Telepon: ${formData.phone.trim()}\n` +
+      `Jenis Mitra: ${partnerTypeLabel}\n` +
+      `${formData.message.trim() ? `\n💬 *Pesan:*\n${formData.message.trim()}\n` : ""}` +
+      `\nSaya tertarik untuk bergabung sebagai mitra ResikPlus. Mohon informasi lebih lanjut. Terima kasih!`
+    );
+
+    window.open(`https://wa.me/6281288866107?text=${message}`, "_blank");
+
     toast({
-      title: "Pendaftaran Berhasil!",
-      description: "Terima kasih atas minat Anda. Tim kami akan menghubungi Anda dalam 2 hari kerja.",
+      title: "Dialihkan ke WhatsApp",
+      description: "Silakan lanjutkan pendaftaran melalui WhatsApp.",
     });
-    
+
     setFormData({
       fullName: "",
       email: "",
@@ -63,7 +77,6 @@ const Partners = () => {
 
   return (
     <Layout>
-      {/* Hero */}
       <section className="section-padding bg-gradient-to-b from-earth-light/50 to-background">
         <div className="container-wide">
           <div className="max-w-3xl mx-auto text-center">
@@ -75,7 +88,7 @@ const Partners = () => {
               Bergabung dengan Jaringan Mitra Kami
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Jadilah bagian dari komunitas bisnis dan individu yang peduli lingkungan 
+              Jadilah bagian dari komunitas bisnis dan individu yang peduli lingkungan
               di Indonesia yang berkomitmen pada keberlanjutan lingkungan.
             </p>
           </div>
@@ -85,37 +98,24 @@ const Partners = () => {
       {/* Benefits */}
       <section className="section-padding bg-secondary/30">
         <div className="container-wide">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground mb-6">Keuntungan Mitra</h2>
-              <p className="text-muted-foreground mb-8">
-                Sebagai mitra ResikPlus, Anda akan mendapatkan akses ke sumber daya eksklusif, 
-                pelatihan, dan peluang networking yang akan membantu Anda mengembangkan 
-                inisiatif keberlanjutan.
-              </p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-foreground">{benefit}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <div className="grid gap-4">
-              {partnerTypes.map((type) => (
-                <div key={type.id} className="card-eco p-6 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-leaf-light flex items-center justify-center shrink-0">
-                    <type.icon className="w-7 h-7 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-foreground">{type.label}</h3>
-                    <p className="text-sm text-muted-foreground">{type.description}</p>
-                  </div>
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="text-3xl font-bold text-foreground mb-6">Keuntungan Mitra</h2>
+            <p className="text-muted-foreground mb-8">
+              Sebagai mitra ResikPlus, Anda akan mendapatkan akses ke sumber daya eksklusif,
+              pelatihan, dan peluang networking yang akan membantu Anda mengembangkan
+              inisiatif keberlanjutan.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {benefits.map((benefit, index) => (
+              <div key={index} className="card-eco p-6 flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <CheckCircle className="w-5 h-5 text-primary" />
                 </div>
-              ))}
-            </div>
+                <span className="text-foreground font-medium pt-2">{benefit}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -188,19 +188,19 @@ const Partners = () => {
                       key={type.id}
                       type="button"
                       onClick={() => setFormData({ ...formData, partnerType: type.id })}
-                      className={`p-4 rounded-xl border-2 transition-all text-center ${
-                        formData.partnerType === type.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      }`}
+                      className={`p-4 rounded-xl border-2 transition-all text-center ${formData.partnerType === type.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/50"
+                        }`}
                     >
-                      <type.icon className={`w-6 h-6 mx-auto mb-2 ${
-                        formData.partnerType === type.id ? "text-primary" : "text-muted-foreground"
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        formData.partnerType === type.id ? "text-primary" : "text-foreground"
-                      }`}>
+                      <type.icon className={`w-6 h-6 mx-auto mb-2 ${formData.partnerType === type.id ? "text-primary" : "text-muted-foreground"
+                        }`} />
+                      <span className={`text-sm font-medium ${formData.partnerType === type.id ? "text-primary" : "text-foreground"
+                        }`}>
                         {type.label}
+                      </span>
+                      <span className="text-xs text-muted-foreground mt-1 block">
+                        {type.description}
                       </span>
                     </button>
                   ))}
@@ -221,9 +221,13 @@ const Partners = () => {
                 />
               </div>
 
-              <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Mengirim..." : "Kirim Pendaftaran"}
+              <Button type="submit" variant="whatsapp" size="xl" className="w-full" disabled={isSubmitting}>
+                <MessageCircle className="w-5 h-5" />
+                {isSubmitting ? "Mengirim..." : "Daftar via WhatsApp"}
               </Button>
+              <p className="text-xs text-center text-muted-foreground">
+                Data pendaftaran akan dikirim ke WhatsApp untuk proses selanjutnya
+              </p>
             </form>
           </div>
         </div>

@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
 import api from "@/lib/api";
+
 interface User {
   id: string;
   email: string;
   name: string;
-  is_staff: boolean;
+  role: "admin" | "user";
+  is_staff?: boolean;
 }
 
 interface AuthContextType {
@@ -17,39 +18,48 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Dummy users removed
+
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  // restore login from localStorage
   useEffect(() => {
-    const storedUser = localStorage.getItem("resikplus_user");
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const savedUser = localStorage.getItem("resikplus_user");
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
     }
   }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const res = await api.post("/auth/login/", { email, password });
-      localStorage.setItem("access_token", res.data.access);
-      localStorage.setItem("refresh_token", res.data.refresh);
-      const userData: User = res.data.user;
-      setUser(userData);
-      localStorage.setItem("resikplus_user", JSON.stringify(userData));
+      const res = await api.post("/accounts/auth/login/", { email, password });
+
+      const { access, refresh, user } = res.data;
+
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+      localStorage.setItem("resikplus_user", JSON.stringify(user));
+
+      setUser(user);
+      api.defaults.headers.Authorization = `Bearer ${access}`;
+
       return { success: true };
-    }
-    catch (error: any) {
-      return { success: false, error: error.response?.data?.detail || "Email atau password salah" };
+    } catch (error: any) {
+      console.error("Login Failed:", error);
+      return {
+        success: false,
+        error: error.response?.data?.detail || "Email atau password salah"
+      };
     }
   };
 
   const logout = () => {
     setUser(null);
-    const navigate = useNavigate();
     localStorage.removeItem("resikplus_user");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    navigate("/login");  
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    api.defaults.headers.Authorization = "";
   };
 
   return (

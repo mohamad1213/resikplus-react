@@ -1,0 +1,23 @@
+
+<!DOCTYPE html>
+<html>
+<body>
+<h1>Testing Dashboard API</h1>
+<div id='output'></div>
+<script>
+    async function test() {
+        const token = localStorage.getItem('access') || '';
+        const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+        
+        try {
+            const res = await fetch('http://127.0.0.1:8000/api/dashboard/stats/', { headers });
+            const data = await res.json();
+            document.getElementById('output').innerText = JSON.stringify(data, null, 2);
+        } catch(e) {
+            document.getElementById('output').innerText = e.toString();
+        }
+    }
+    test();
+</script>
+</body>
+</html>

@@ -77,19 +77,19 @@ const Footer = () => {
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-leaf-light shrink-0 mt-0.5" />
                 <span className="text-sm text-primary-foreground/80">
-                  Jl. Lingkungan Bersih No. 123, Jakarta, Indonesia
+                  Gang melati no.15/17. Gonjen RT05 Tamantirto Kasihan Bantul DIY 55183
                 </span>
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-leaf-light shrink-0" />
-                <a href="tel:+6281234567890" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  +62 812 3456 7890
+                <a href="tel:+6281288866107" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                  +62 812 8886 6107
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-leaf-light shrink-0" />
-                <a href="mailto:info@resikplus.id" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
-                  info@resikplus.id
+                <a href="mailto:resikpluswahana@gmail.com" className="text-sm text-primary-foreground/80 hover:text-primary-foreground transition-colors">
+                  resikpluswahana@gmail.com
                 </a>
               </li>
             </ul>

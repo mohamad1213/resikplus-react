@@ -11,6 +11,7 @@ const pageTitles: Record<string, string> = {
   "/admin/partners": "Manajemen Mitra",
   "/admin/courses": "Manajemen Kursus",
   "/admin/news": "Manajemen Berita",
+  "/admin/notifications": "Manajemen Notifikasi",
   "/admin/reports": "Laporan",
   "/admin/settings": "Pengaturan",
 };

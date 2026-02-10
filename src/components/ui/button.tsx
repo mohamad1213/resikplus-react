@@ -20,7 +20,7 @@ const buttonVariants = cva(
         heroOutline: "border-2 border-primary-foreground/80 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 text-base px-8 py-4",
         accent: "bg-accent text-accent-foreground hover:bg-accent/90 shadow-eco-md hover:shadow-eco-lg",
         leaf: "bg-leaf text-primary-foreground hover:bg-leaf/90 shadow-eco-md",
-        whatsapp: "bg-[hsl(142_70%_45%)] text-primary-foreground hover:bg-[hsl(142_70%_40%)] shadow-eco-lg hover:shadow-eco-xl",
+        whatsapp: "bg-[#25D366] text-white hover:bg-[#128C7E] shadow-lg hover:shadow-xl",
       },
       size: {
         default: "h-10 px-5 py-2",
@@ -39,7 +39,7 @@ const buttonVariants = cva(
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
+  VariantProps<typeof buttonVariants> {
   asChild?: boolean;
 }
 

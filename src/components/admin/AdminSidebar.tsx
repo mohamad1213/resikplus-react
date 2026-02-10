@@ -6,10 +6,11 @@ import {
   FileText,
   Settings,
   LogOut,
-  Recycle,
   Building2,
   GraduationCap,
   Newspaper,
+  Bell,
+  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,13 +20,13 @@ import logoResikplus from "@/assets/logo-resikplus.jpg";
 const menuItems = [
   { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { name: "Pengguna", href: "/admin/users", icon: Users },
-  { name: "Education", href: "/admin/education", icon: GraduationCap },
   { name: "Produk", href: "/admin/products", icon: Package },
   { name: "Mitra", href: "/admin/partners", icon: Building2 },
+  { name: "Angkut Sampah", href: "/admin/waste-pickups", icon: Truck },
   { name: "Kursus", href: "/admin/courses", icon: GraduationCap },
   { name: "Berita", href: "/admin/news", icon: Newspaper },
+  { name: "Notifikasi", href: "/admin/notifications", icon: Bell },
   { name: "Laporan", href: "/admin/reports", icon: FileText },
-  { name: "Pengaturan", href: "/admin/settings", icon: Settings },
 ];
 
 interface AdminSidebarProps {

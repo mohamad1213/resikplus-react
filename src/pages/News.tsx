@@ -1,81 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Search, Calendar, User, ArrowRight, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
+import api from "@/lib/api";
+
+interface Article {
+  id: number;
+  title: string;
+  excerpt: string;
+  category: string;
+  author: string;
+  date: string;
+  featured: boolean;
+}
 
 const categories = ["Semua", "Daur Ulang", "Keberlanjutan", "Teknologi", "Komunitas", "Kebijakan"];
 
-const articles = [
-  {
-    id: 1,
-    title: "Indonesia Luncurkan Inisiatif Daur Ulang Nasional 2025",
-    excerpt: "Pemerintah mengumumkan program daur ulang komprehensif yang menargetkan pengurangan sampah 70% pada tahun 2030.",
-    category: "Kebijakan",
-    author: "Tim ResikPlus",
-    date: "2 Januari 2025",
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Bagaimana AI Mengubah Teknologi Pemilahan Sampah",
-    excerpt: "Sistem kecerdasan buatan baru merevolusi cara fasilitas daur ulang memilah dan memproses material.",
-    category: "Teknologi",
-    author: "Dr. Andi Wijaya",
-    date: "28 Desember 2024",
-    featured: false,
-  },
-  {
-    id: 3,
-    title: "Kisah Sukses Komunitas: Kawasan Zero-Waste Jakarta",
-    excerpt: "Bagaimana satu lingkungan mencapai pengurangan sampah yang luar biasa melalui keterlibatan komunitas dan edukasi.",
-    category: "Komunitas",
-    author: "Siti Nurhaliza",
-    date: "25 Desember 2024",
-    featured: false,
-  },
-  {
-    id: 4,
-    title: "Kebangkitan Ekonomi Sirkular di Asia Tenggara",
-    excerpt: "Bisnis regional mengadopsi prinsip ekonomi sirkular untuk mengurangi sampah dan meningkatkan profitabilitas.",
-    category: "Keberlanjutan",
-    author: "Tim ResikPlus",
-    date: "20 Desember 2024",
-    featured: false,
-  },
-  {
-    id: 5,
-    title: "Teknologi Daur Ulang Plastik Baru Janjikan Pemulihan 95%",
-    excerpt: "Teknologi terobosan memungkinkan pemulihan material plastik yang hampir sempurna untuk penggunaan kembali.",
-    category: "Daur Ulang",
-    author: "Prof. Bambang Susilo",
-    date: "18 Desember 2024",
-    featured: false,
-  },
-  {
-    id: 6,
-    title: "Memahami Extended Producer Responsibility",
-    excerpt: "Penjelasan mendalam tentang regulasi EPR dan artinya bagi produsen dan konsumen.",
-    category: "Kebijakan",
-    author: "Tim ResikPlus",
-    date: "15 Desember 2024",
-    featured: false,
-  },
-];
-
 const News = () => {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("Semua");
   const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        const response = await api.get('/education/articles/');
+        // Filter only Published articles if logic requires, but backend returns all.
+        // Assuming we want to show only Published ones:
+        const publishedArticles = response.data.filter((item: any) => item.status === 'Published');
+
+        const formattedData = publishedArticles.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          excerpt: item.excerpt || (item.content ? item.content.substring(0, 150) + "..." : ""),
+          category: item.category,
+          author: item.author,
+          date: new Date(item.created_at).toLocaleDateString("id-ID", {
+            day: "numeric", month: "long", year: "numeric"
+          }),
+          featured: item.is_featured,
+        }));
+        setArticles(formattedData);
+      } catch (error) {
+        console.error("Failed to fetch articles", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchArticles();
+  }, []);
 
   const filteredArticles = articles.filter((article) => {
     const matchesCategory = selectedCategory === "Semua" || article.category === selectedCategory;
     const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          article.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+      article.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
   const featuredArticle = articles.find((a) => a.featured);
   const regularArticles = filteredArticles.filter((a) => !a.featured);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-screen">
+          <p>Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -87,10 +82,10 @@ const News = () => {
               Berita & Wawasan Lingkungan
             </h1>
             <p className="text-lg text-muted-foreground leading-relaxed mb-8">
-              Dapatkan informasi terbaru tentang berita, riset, dan tren dalam 
+              Dapatkan informasi terbaru tentang berita, riset, dan tren dalam
               keberlanjutan lingkungan dan pengelolaan sampah.
             </p>
-            
+
             {/* Search */}
             <div className="relative max-w-xl mx-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
@@ -114,11 +109,10 @@ const News = () => {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary text-secondary-foreground hover:bg-primary/10"
-                }`}
+                  }`}
               >
                 {category}
               </button>
