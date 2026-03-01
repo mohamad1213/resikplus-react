@@ -1,14 +1,38 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  Clock, Users, Award, CheckCircle, ArrowRight, ArrowLeft, 
+import {
+  Clock, Users, Award, CheckCircle, ArrowRight, ArrowLeft,
   BookOpen, Target, GraduationCap, Play, Lock, Star,
-  Calendar, Globe
+  Calendar, Globe, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import Layout from "@/components/layout/Layout";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import api from "@/lib/api";
+
+interface RegistrationForm {
+  fullName: string;
+  email: string;
+  phone: string;
+  notes: string;
+}
+
+interface Lesson {
+  id: number;
+  title: string;
+  type: string;
+  duration: string;
+}
+
+interface Module {
+  id: number;
+  title: string;
+  lessons: Lesson[];
+}
 
 interface Course {
   id: number;
@@ -16,509 +40,208 @@ interface Course {
   description: string;
   duration: string;
   level: string;
-  students: number;
+  students_count: number;
   price: string;
-  features: string[];
+  features: string[] | string;
   type: string;
-  curriculum: {
-    module: string;
-    lessons: string[];
-    duration: string;
-  }[];
-  learningPath: string[];
-  benefits: string[];
-  requirements: string[];
-  instructor: {
-    name: string;
-    role: string;
-    bio: string;
-  };
+  modules: Module[];
+  instructor: string;
+  image: string;
+  // Additional fields if available from backend, or mocked for now
+  benefits?: string[];
+  learningPath?: string[];
+  requirements?: string[];
 }
-
-const coursesData: Course[] = [
-  {
-    id: 1,
-    title: "Dasar-Dasar Pengelolaan Sampah",
-    description: "Pengenalan komprehensif tentang prinsip pengelolaan sampah, mencakup jenis sampah, metode pengumpulan, dan proses pengolahan dasar. Kursus ini dirancang untuk memberikan pemahaman fundamental yang kuat tentang industri pengelolaan sampah.",
-    duration: "4 minggu",
-    level: "Pemula",
-    students: 1250,
-    price: "Rp 1.500.000",
-    features: [
-      "Memahami kategori sampah",
-      "Metode pengumpulan dan transportasi",
-      "Proses pengolahan dasar",
-      "Kepatuhan regulasi",
-      "Sertifikat setelah selesai",
-    ],
-    type: "Online",
-    curriculum: [
-      {
-        module: "Modul 1: Pengenalan Sampah",
-        lessons: ["Definisi dan klasifikasi sampah", "Dampak lingkungan", "Regulasi nasional"],
-        duration: "1 minggu"
-      },
-      {
-        module: "Modul 2: Metode Pengumpulan",
-        lessons: ["Sistem pengumpulan rumah tangga", "Pengumpulan industri", "Teknologi transportasi"],
-        duration: "1 minggu"
-      },
-      {
-        module: "Modul 3: Pengolahan Dasar",
-        lessons: ["Sorting dan pemilahan", "Komposting dasar", "Penimbunan saniter"],
-        duration: "1 minggu"
-      },
-      {
-        module: "Modul 4: Praktik & Sertifikasi",
-        lessons: ["Studi kasus", "Proyek akhir", "Ujian sertifikasi"],
-        duration: "1 minggu"
-      }
-    ],
-    learningPath: [
-      "Memahami konsep dasar pengelolaan sampah",
-      "Mempelajari metode pengumpulan dan transportasi",
-      "Menguasai teknik pengolahan dasar",
-      "Mengerjakan proyek praktik",
-      "Mendapatkan sertifikasi"
-    ],
-    benefits: [
-      "Sertifikat resmi yang diakui industri",
-      "Akses materi pembelajaran selamanya",
-      "Networking dengan profesional lingkungan",
-      "Peluang karir di sektor pengelolaan sampah",
-      "Kontribusi nyata untuk lingkungan"
-    ],
-    requirements: [
-      "Tidak ada persyaratan khusus",
-      "Akses internet stabil",
-      "Komitmen belajar 5-7 jam per minggu"
-    ],
-    instructor: {
-      name: "Dr. Ahmad Sustani",
-      role: "Environmental Specialist",
-      bio: "20+ tahun pengalaman di bidang pengelolaan lingkungan"
-    }
-  },
-  {
-    id: 2,
-    title: "Teknik Daur Ulang Industri",
-    description: "Pelajari metode daur ulang tingkat lanjut yang digunakan dalam lingkungan industri, termasuk pemulihan material, teknologi pemrosesan, dan kontrol kualitas.",
-    duration: "6 minggu",
-    level: "Menengah",
-    students: 856,
-    price: "Rp 2.500.000",
-    features: [
-      "Identifikasi dan pemilahan material",
-      "Pengoperasian peralatan pemrosesan",
-      "Standar kontrol kualitas",
-      "Protokol keselamatan",
-      "Sesi praktik langsung",
-    ],
-    type: "Hybrid",
-    curriculum: [
-      {
-        module: "Modul 1: Material Recovery",
-        lessons: ["Jenis material daur ulang", "Teknologi identifikasi", "Nilai ekonomi material"],
-        duration: "1 minggu"
-      },
-      {
-        module: "Modul 2: Teknologi Pemrosesan",
-        lessons: ["Mesin pencacah", "Mesin pres", "Sistem conveyor"],
-        duration: "2 minggu"
-      },
-      {
-        module: "Modul 3: Kontrol Kualitas",
-        lessons: ["Standar kualitas output", "Pengujian material", "Sertifikasi produk"],
-        duration: "1 minggu"
-      },
-      {
-        module: "Modul 4: Keselamatan & Praktik",
-        lessons: ["K3 di fasilitas daur ulang", "Praktik lapangan", "Proyek akhir"],
-        duration: "2 minggu"
-      }
-    ],
-    learningPath: [
-      "Menguasai identifikasi material",
-      "Mempelajari teknologi pemrosesan",
-      "Memahami standar kualitas",
-      "Praktik di fasilitas nyata",
-      "Sertifikasi profesional"
-    ],
-    benefits: [
-      "Sertifikat profesional tingkat menengah",
-      "Praktik langsung di fasilitas mitra",
-      "Koneksi dengan industri daur ulang",
-      "Peluang magang di perusahaan partner",
-      "Update materi setiap tahun"
-    ],
-    requirements: [
-      "Pemahaman dasar pengelolaan sampah",
-      "Usia minimal 18 tahun",
-      "Bersedia mengikuti sesi praktik offline"
-    ],
-    instructor: {
-      name: "Ir. Budi Recycling",
-      role: "Industrial Recycling Expert",
-      bio: "Mantan direktur operasional perusahaan daur ulang nasional"
-    }
-  },
-  {
-    id: 3,
-    title: "Strategi Ekonomi Sirkular",
-    description: "Kuasai prinsip ekonomi sirkular dan pelajari cara menerapkan model bisnis berkelanjutan yang meminimalkan sampah.",
-    duration: "8 minggu",
-    level: "Lanjutan",
-    students: 428,
-    price: "Rp 3.500.000",
-    features: [
-      "Desain model bisnis sirkular",
-      "Penilaian siklus hidup",
-      "Optimisasi rantai pasok",
-      "Keterlibatan pemangku kepentingan",
-      "Workshop studi kasus",
-    ],
-    type: "Online",
-    curriculum: [
-      {
-        module: "Modul 1: Prinsip Ekonomi Sirkular",
-        lessons: ["Konsep dan framework", "Perbandingan ekonomi linear", "Studi kasus global"],
-        duration: "2 minggu"
-      },
-      {
-        module: "Modul 2: Life Cycle Assessment",
-        lessons: ["Metodologi LCA", "Software LCA", "Interpretasi hasil"],
-        duration: "2 minggu"
-      },
-      {
-        module: "Modul 3: Circular Business Model",
-        lessons: ["Product-as-a-Service", "Sharing economy", "Remanufacturing"],
-        duration: "2 minggu"
-      },
-      {
-        module: "Modul 4: Implementasi & Strategi",
-        lessons: ["Stakeholder engagement", "Change management", "Proyek implementasi"],
-        duration: "2 minggu"
-      }
-    ],
-    learningPath: [
-      "Memahami framework ekonomi sirkular",
-      "Menguasai Life Cycle Assessment",
-      "Merancang circular business model",
-      "Menyusun strategi implementasi",
-      "Mempresentasikan proyek akhir"
-    ],
-    benefits: [
-      "Sertifikat tingkat lanjutan",
-      "Akses ke komunitas profesional eksklusif",
-      "Mentoring personal dari ahli",
-      "Template dan tools business model",
-      "Rekomendasi untuk posisi manajerial"
-    ],
-    requirements: [
-      "Pengalaman minimal 2 tahun di bidang terkait",
-      "Lulus kursus menengah atau setara",
-      "Kemampuan bahasa Inggris pasif"
-    ],
-    instructor: {
-      name: "Prof. Circular Economy",
-      role: "Circular Economy Consultant",
-      bio: "Konsultan ekonomi sirkular untuk perusahaan Fortune 500"
-    }
-  },
-  {
-    id: 4,
-    title: "Program Keberlanjutan UMKM",
-    description: "Program khusus untuk usaha kecil dan menengah yang ingin menerapkan praktik berkelanjutan dan strategi pengurangan sampah.",
-    duration: "5 minggu",
-    level: "Pemula",
-    students: 672,
-    price: "Rp 2.000.000",
-    features: [
-      "Penilaian keberlanjutan",
-      "Strategi pengurangan sampah",
-      "Analisis biaya-manfaat",
-      "Peta jalan implementasi",
-      "Dukungan berkelanjutan",
-    ],
-    type: "Online",
-    curriculum: [
-      {
-        module: "Modul 1: Sustainability Assessment",
-        lessons: ["Audit lingkungan UMKM", "Identifikasi peluang", "Baseline measurement"],
-        duration: "1 minggu"
-      },
-      {
-        module: "Modul 2: Strategi Pengurangan",
-        lessons: ["3R untuk UMKM", "Supplier engagement", "Customer education"],
-        duration: "1.5 minggu"
-      },
-      {
-        module: "Modul 3: Business Case",
-        lessons: ["Cost-benefit analysis", "ROI sustainability", "Funding options"],
-        duration: "1 minggu"
-      },
-      {
-        module: "Modul 4: Implementasi",
-        lessons: ["Action planning", "Monitoring & evaluation", "Continuous improvement"],
-        duration: "1.5 minggu"
-      }
-    ],
-    learningPath: [
-      "Melakukan penilaian keberlanjutan",
-      "Merancang strategi pengurangan sampah",
-      "Menyusun business case",
-      "Mengimplementasikan program",
-      "Mengukur dan melaporkan hasil"
-    ],
-    benefits: [
-      "Sertifikat UMKM Berkelanjutan",
-      "Template dokumen siap pakai",
-      "Konsultasi gratis 3 bulan",
-      "Akses ke jaringan UMKM hijau",
-      "Bantuan akses pasar ramah lingkungan"
-    ],
-    requirements: [
-      "Pemilik atau pengelola UMKM",
-      "UMKM sudah beroperasi minimal 6 bulan",
-      "Komitmen untuk implementasi"
-    ],
-    instructor: {
-      name: "Ibu Sustainability",
-      role: "SME Sustainability Advisor",
-      bio: "Pendamping 500+ UMKM menuju praktik berkelanjutan"
-    }
-  },
-  {
-    id: 5,
-    title: "Petugas Kepatuhan Lingkungan",
-    description: "Pelatihan komprehensif untuk profesional yang bertanggung jawab atas kepatuhan lingkungan dan manajemen regulasi.",
-    duration: "10 minggu",
-    level: "Lanjutan",
-    students: 312,
-    price: "Rp 5.000.000",
-    features: [
-      "Regulasi lingkungan",
-      "Audit dan pelaporan",
-      "Manajemen risiko",
-      "Perencanaan tindakan korektif",
-      "Sertifikasi profesional",
-    ],
-    type: "Hybrid",
-    curriculum: [
-      {
-        module: "Modul 1: Regulasi Lingkungan",
-        lessons: ["UU & PP Lingkungan Hidup", "Peraturan sektoral", "Standar internasional"],
-        duration: "2 minggu"
-      },
-      {
-        module: "Modul 2: Audit Lingkungan",
-        lessons: ["ISO 14001", "Teknik audit", "Dokumentasi"],
-        duration: "2.5 minggu"
-      },
-      {
-        module: "Modul 3: Manajemen Risiko",
-        lessons: ["Risk assessment", "Mitigasi", "Emergency response"],
-        duration: "2 minggu"
-      },
-      {
-        module: "Modul 4: Pelaporan & Compliance",
-        lessons: ["Sustainability reporting", "Proper & Adipura", "Legal compliance"],
-        duration: "2 minggu"
-      },
-      {
-        module: "Modul 5: Sertifikasi",
-        lessons: ["Review materi", "Simulasi ujian", "Ujian sertifikasi"],
-        duration: "1.5 minggu"
-      }
-    ],
-    learningPath: [
-      "Menguasai regulasi lingkungan",
-      "Melakukan audit lingkungan",
-      "Mengelola risiko lingkungan",
-      "Menyusun laporan kepatuhan",
-      "Mendapatkan sertifikasi profesional"
-    ],
-    benefits: [
-      "Sertifikasi Petugas Kepatuhan Lingkungan",
-      "Pengakuan oleh Kementerian LHK",
-      "Akses ke database regulasi terupdate",
-      "Jaringan profesional compliance officer",
-      "Jaminan penempatan kerja"
-    ],
-    requirements: [
-      "S1 Lingkungan/Teknik atau setara",
-      "Pengalaman kerja minimal 3 tahun",
-      "Rekomendasi dari perusahaan/institusi"
-    ],
-    instructor: {
-      name: "Dr. Legal Compliance",
-      role: "Environmental Law Expert",
-      bio: "Mantan pejabat Kementerian LHK dan konsultan hukum lingkungan"
-    }
-  },
-  {
-    id: 6,
-    title: "Workshop Daur Ulang Komunitas",
-    description: "Pelajari cara mengorganisir dan menjalankan program daur ulang yang efektif di komunitas Anda dengan workshop praktis ini.",
-    duration: "2 minggu",
-    level: "Pemula",
-    students: 2100,
-    price: "Rp 750.000",
-    features: [
-      "Strategi keterlibatan komunitas",
-      "Perencanaan program",
-      "Manajemen sumber daya",
-      "Pengukuran dampak",
-      "Peluang networking",
-    ],
-    type: "Offline",
-    curriculum: [
-      {
-        module: "Hari 1-3: Perencanaan",
-        lessons: ["Community mapping", "Stakeholder analysis", "Program design"],
-        duration: "3 hari"
-      },
-      {
-        module: "Hari 4-7: Implementasi",
-        lessons: ["Mobilisasi komunitas", "Setup collection points", "Training volunteers"],
-        duration: "4 hari"
-      },
-      {
-        module: "Hari 8-10: Operasional",
-        lessons: ["Daily operations", "Troubleshooting", "Quality control"],
-        duration: "3 hari"
-      },
-      {
-        module: "Hari 11-14: Evaluasi",
-        lessons: ["Impact measurement", "Reporting", "Sustainability planning"],
-        duration: "4 hari"
-      }
-    ],
-    learningPath: [
-      "Merencanakan program komunitas",
-      "Melaksanakan mobilisasi",
-      "Mengelola operasional harian",
-      "Mengukur dampak program",
-      "Menyusun rencana keberlanjutan"
-    ],
-    benefits: [
-      "Sertifikat Fasilitator Daur Ulang Komunitas",
-      "Starter kit untuk program komunitas",
-      "Pendampingan 6 bulan pasca workshop",
-      "Akses ke platform komunitas nasional",
-      "Pengalaman praktik langsung"
-    ],
-    requirements: [
-      "Berdomisili di area workshop",
-      "Aktif di kegiatan komunitas",
-      "Bersedia menjadi volunteer setelah lulus"
-    ],
-    instructor: {
-      name: "Kak Community",
-      role: "Community Organizer",
-      bio: "Founder bank sampah terbesar di Indonesia Timur"
-    }
-  }
-];
 
 const CourseDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+
+  const [course, setCourse] = useState<Course | null>(null);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'curriculum' | 'benefits' | 'instructor'>('curriculum');
 
-  const course = coursesData.find(c => c.id === Number(id));
+  // Registration State
+  const [showRegistration, setShowRegistration] = useState(false);
+  const [registrationForm, setRegistrationForm] = useState<RegistrationForm>({
+    fullName: "",
+    email: "",
+    phone: "",
+    notes: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user || null);
-    };
-    checkUser();
+    fetchCourse();
+  }, [id]);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/course/${id}`
-      }
-    });
-    
-    if (error) {
+  const fetchCourse = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/courses/${id}/`);
+      setCourse(res.data);
+    } catch (error) {
+      console.error("Failed to fetch course:", error);
       toast({
-        title: "Login Gagal",
-        description: error.message,
+        title: "Gagal memuat kursus",
+        description: "Kursus tidak ditemukan atau terjadi kesalahan.",
         variant: "destructive"
       });
+      navigate("/courses");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const handleRegister = () => {
+  const formatPrice = (price: string | number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(typeof price === 'string' ? parseFloat(price) : price);
+  };
+
+  const getFeatures = (features: any): string[] => {
+    if (Array.isArray(features)) return features;
+    if (typeof features === 'string') {
+      try {
+        return JSON.parse(features);
+      } catch {
+        return [];
+      }
+    }
+    return [];
+  };
+
+  // Mock data for UI placeholders if backend doesn't provide them yet
+  const getBenefits = () => course?.benefits || [
+    "Sertifikat resmi yang diakui industri",
+    "Akses materi pembelajaran selamanya",
+    "Networking dengan profesional lingkungan",
+    "Peluang karir di sektor pengelolaan sampah",
+    "Kontribusi nyata untuk lingkungan"
+  ];
+
+  const getRequirements = () => course?.requirements || [
+    "Tidak ada persyaratan khusus",
+    "Akses internet stabil",
+    "Komitmen belajar mandiri"
+  ];
+
+  const getLearningPath = () => course?.learningPath || [
+    "Memahami konsep dasar",
+    "Mempelajari materi inti",
+    "Mengerjakan kuis dan tugas",
+    "Menyelesaikan proyek akhir",
+    "Mendapatkan sertifikat"
+  ];
+
+  const getInstructor = () => ({
+    name: course?.instructor || "Instruktur ResikPlus",
+    role: "Expert",
+    bio: "Profesional berpengalaman di bidang lingkungan dan pengelolaan sampah."
+  });
+
+  const handleOpenRegistration = () => {
+    setShowRegistration(true);
+  };
+
+  const handleCloseRegistration = () => {
+    setShowRegistration(false);
+    setRegistrationForm({ fullName: "", email: "", phone: "", notes: "" });
+  };
+
+  const handleRegistrationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!course) return;
-    
-    const message = `Halo Resikplus! 👋
 
-Saya ingin mendaftar kursus:
+    if (!registrationForm.fullName.trim() || !registrationForm.phone.trim() || !registrationForm.email.trim()) {
+      toast({
+        title: "Data tidak lengkap",
+        description: "Mohon lengkapi nama, email, dan nomor telepon.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-📚 *${course.title}*
-⏱ Durasi: ${course.duration}
-📊 Level: ${course.level}
-💰 Biaya: ${course.price}
+    setIsSubmitting(true);
 
-*Data Pendaftar:*
-👤 Nama: ${user?.user_metadata?.full_name || user?.email}
-📧 Email: ${user?.email}
+    try {
+      // 1. Save registration to backend
+      const res = await api.post(`/courses/${course.id}/register/`, {
+        full_name: registrationForm.fullName,
+        email: registrationForm.email,
+        phone: registrationForm.phone,
+        notes: registrationForm.notes
+      });
+      const generatedPassword = res.data.generated_password;
 
-Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
+      // 2. Construct WhatsApp Message
+      const message = `Halo Admin ResikPlus, saya ingin mendaftar kursus berikut:\n\n` +
+        `*Judul*: ${course.title}\n` +
+        `*Harga*: ${formatPrice(course.price)}\n\n` +
+        `*Data Diri*:\n` +
+        `Nama: ${registrationForm.fullName}\n` +
+        `Email: ${registrationForm.email}\n` +
+        `No HP: ${registrationForm.phone}\n` +
+        `Password Sementara: ${generatedPassword}\n` +
+        `Catatan: ${registrationForm.notes || '-'}\n\n` +
+        `Mohon info pembayaran selanjutnya. Terima kasih.`;
 
-    const whatsappUrl = `https://wa.me/6281288866107?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank");
-    
-    toast({
-      title: "Pendaftaran Dikirim!",
-      description: "Anda akan diarahkan ke WhatsApp untuk konfirmasi.",
-    });
+      const waUrl = `https://wa.me/6285156803370?text=${encodeURIComponent(message)}`;
+
+      // 3. Close modal and redirect
+      handleCloseRegistration();
+      window.open(waUrl, '_blank');
+
+      toast({
+        title: "Pendaftaran Berhasil",
+        description: "Anda akan dialihkan ke WhatsApp untuk konfirmasi pembayaran.",
+      });
+
+    } catch (error: any) {
+      console.error("Registration failed:", error);
+      const errorMsg = error.response?.data?.detail || error.response?.data?.email?.[0] || "Terjadi kesalahan sistem. Silakan coba lagi.";
+      toast({
+        title: "Pendaftaran Gagal",
+        description: errorMsg,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  if (!course) {
+  if (loading) {
     return (
       <Layout>
-        <div className="section-padding container-wide text-center">
-          <h1 className="text-2xl font-bold text-foreground mb-4">Kursus Tidak Ditemukan</h1>
-          <Button onClick={() => navigate('/courses')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Kembali ke Daftar Kursus
-          </Button>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       </Layout>
     );
   }
+
+  if (!course) return null; // Should have redirected
+
+  const instructor = getInstructor();
+  const features = getFeatures(course.features);
 
   return (
     <Layout>
       {/* Hero Section */}
       <section className="section-padding bg-gradient-to-b from-sky-light/50 to-background">
         <div className="container-wide">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="mb-6"
             onClick={() => navigate('/courses')}
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Kembali ke Daftar Kursus
           </Button>
-          
+
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Course Info */}
             <div className="lg:col-span-2">
@@ -534,15 +257,15 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                   4.8 Rating
                 </span>
               </div>
-              
+
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
                 {course.title}
               </h1>
-              
+
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
                 {course.description}
               </p>
-              
+
               <div className="flex flex-wrap gap-6 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-5 h-5 text-primary" />
@@ -550,11 +273,11 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Users className="w-5 h-5 text-primary" />
-                  <span>{course.students.toLocaleString()} peserta</span>
+                  <span>{course.students_count.toLocaleString()} peserta</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <BookOpen className="w-5 h-5 text-primary" />
-                  <span>{course.curriculum.length} modul</span>
+                  <span>{course.modules?.length || 0} modul</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Globe className="w-5 h-5 text-primary" />
@@ -562,60 +285,37 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                 </div>
               </div>
             </div>
-            
+
             {/* Pricing Card */}
             <div className="bg-card rounded-2xl shadow-lg border border-border p-6 h-fit sticky top-24">
-              <div className="text-3xl font-bold text-foreground mb-2">{course.price}</div>
+              <div className="text-3xl font-bold text-foreground mb-2">{formatPrice(course.price)}</div>
               <p className="text-sm text-muted-foreground mb-6">Akses kursus penuh + sertifikat</p>
-              
-              {user ? (
-                <div className="space-y-3">
-                  <Button 
-                    size="lg" 
-                    className="w-full"
-                    onClick={handleRegister}
-                  >
-                    Daftar Sekarang via WhatsApp
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => navigate(`/course/${id}/modules`)}
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Lihat Modul Kursus
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <Button 
-                    size="lg" 
-                    className="w-full"
-                    onClick={handleGoogleLogin}
-                    disabled={loading}
-                  >
-                    {loading ? "Memproses..." : "Login dengan Google untuk Daftar"}
-                  </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => navigate(`/course/${id}/modules`)}
-                  >
-                    <BookOpen className="w-4 h-4 mr-2" />
-                    Preview Modul Kursus
-                  </Button>
-                  <p className="text-xs text-center text-muted-foreground">
-                    Masuk dengan akun Google untuk proses pendaftaran yang lebih aman dan cepat
-                  </p>
-                </div>
-              )}
-              
+
+              <div className="space-y-3">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={handleOpenRegistration}
+                >
+                  Daftar Sekarang
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+                {/* 
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate(`/course/${id}/modules`)}
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  Preview Modul
+                </Button>
+                */}
+              </div>
+
               <div className="border-t border-border pt-4 mt-4 space-y-3">
                 <h4 className="font-semibold text-foreground mb-3">Yang Anda Dapatkan:</h4>
-                {course.features.map((feature, index) => (
+                {features.map((feature, index) => (
                   <div key={index} className="flex items-start gap-2 text-sm">
                     <CheckCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <span className="text-muted-foreground">{feature}</span>
@@ -626,7 +326,7 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
           </div>
         </div>
       </section>
-      
+
       {/* Tabs Section */}
       <section className="py-8 border-b border-border sticky top-[72px] bg-background z-40">
         <div className="container-wide">
@@ -639,11 +339,10 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
               <button
                 key={key}
                 onClick={() => setActiveTab(key as any)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  activeTab === key 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${activeTab === key
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
                 <Icon className="w-4 h-4" />
                 {label}
@@ -652,7 +351,7 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
           </div>
         </div>
       </section>
-      
+
       {/* Content Section */}
       <section className="section-padding bg-background">
         <div className="container-wide">
@@ -666,12 +365,12 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                     Alur Pembelajaran
                   </h2>
                   <div className="relative pl-8">
-                    {course.learningPath.map((step, index) => (
+                    {getLearningPath().map((step, index) => (
                       <div key={index} className="relative pb-8 last:pb-0">
                         <div className="absolute left-0 top-0 w-6 h-6 -translate-x-1/2 bg-primary rounded-full flex items-center justify-center text-xs text-primary-foreground font-bold">
                           {index + 1}
                         </div>
-                        {index !== course.learningPath.length - 1 && (
+                        {index !== getLearningPath().length - 1 && (
                           <div className="absolute left-0 top-6 w-0.5 h-full -translate-x-1/2 bg-border" />
                         )}
                         <p className="text-foreground ml-4">{step}</p>
@@ -679,7 +378,7 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                     ))}
                   </div>
                 </div>
-                
+
                 {/* Curriculum */}
                 <div>
                   <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
@@ -687,42 +386,42 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                     Detail Kurikulum
                   </h2>
                   <div className="space-y-4">
-                    {course.curriculum.map((module, index) => (
-                      <div key={index} className="border border-border rounded-xl overflow-hidden">
-                        <div className="bg-secondary/50 p-4 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                              <Play className="w-4 h-4 text-primary" />
+                    {course.modules && course.modules.length > 0 ? (
+                      course.modules.map((module, index) => (
+                        <div key={index} className="border border-border rounded-xl overflow-hidden">
+                          <div className="bg-secondary/50 p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                <Play className="w-4 h-4 text-primary" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-foreground">{module.title}</h3>
+                                {/* <p className="text-xs text-muted-foreground">{module.duration}</p> */}
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-foreground">{module.module}</h3>
-                              <p className="text-xs text-muted-foreground">{module.duration}</p>
-                            </div>
+                            <span className="text-xs text-muted-foreground">{module.lessons.length} pelajaran</span>
                           </div>
-                          <span className="text-xs text-muted-foreground">{module.lessons.length} pelajaran</span>
-                        </div>
-                        <div className="p-4 space-y-2">
-                          {module.lessons.map((lesson, lessonIndex) => (
-                            <div key={lessonIndex} className="flex items-center gap-3 text-sm text-muted-foreground">
-                              {user ? (
-                                <CheckCircle className="w-4 h-4 text-primary" />
-                              ) : (
+                          <div className="p-4 space-y-2">
+                            {module.lessons.map((lesson, lessonIndex) => (
+                              <div key={lessonIndex} className="flex items-center gap-3 text-sm text-muted-foreground">
                                 <Lock className="w-4 h-4" />
-                              )}
-                              <span>{lesson}</span>
-                            </div>
-                          ))}
+                                <span>{lesson.title}</span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">Belum ada modul yang tersedia.</p>
+                    )}
                   </div>
                 </div>
-                
+
                 {/* Requirements */}
                 <div>
                   <h2 className="text-2xl font-bold text-foreground mb-6">Persyaratan</h2>
                   <ul className="space-y-2">
-                    {course.requirements.map((req, index) => (
+                    {getRequirements().map((req, index) => (
                       <li key={index} className="flex items-center gap-2 text-muted-foreground">
                         <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                         {req}
@@ -732,16 +431,16 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                 </div>
               </div>
             )}
-            
+
             {activeTab === 'benefits' && (
               <div className="space-y-8">
                 <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
                   <Award className="w-6 h-6 text-primary" />
                   Manfaat Mengikuti Kursus Ini
                 </h2>
-                
+
                 <div className="grid md:grid-cols-2 gap-6">
-                  {course.benefits.map((benefit, index) => (
+                  {getBenefits().map((benefit, index) => (
                     <div key={index} className="flex items-start gap-4 p-4 rounded-xl bg-secondary/30 border border-border">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                         <CheckCircle className="w-5 h-5 text-primary" />
@@ -750,49 +449,43 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="bg-gradient-to-r from-primary/10 to-sky/10 rounded-2xl p-8 mt-8">
                   <h3 className="text-xl font-bold text-foreground mb-4">
                     Siap Memulai Perjalanan Anda?
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    Bergabung dengan {course.students.toLocaleString()}+ peserta lain yang sudah mengikuti kursus ini.
+                    Bergabung dengan {course.students_count.toLocaleString()}+ peserta lain yang sudah mengikuti kursus ini.
                   </p>
-                  {user ? (
-                    <Button size="lg" onClick={handleRegister}>
-                      Daftar Sekarang
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  ) : (
-                    <Button size="lg" onClick={handleGoogleLogin} disabled={loading}>
-                      {loading ? "Memproses..." : "Login dengan Google untuk Daftar"}
-                    </Button>
-                  )}
+                  <Button size="lg" onClick={handleOpenRegistration}>
+                    Daftar Sekarang
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </div>
               </div>
             )}
-            
+
             {activeTab === 'instructor' && (
               <div className="space-y-8">
                 <h2 className="text-2xl font-bold text-foreground mb-6 flex items-center gap-2">
                   <GraduationCap className="w-6 h-6 text-primary" />
                   Tentang Instruktur
                 </h2>
-                
+
                 <div className="flex items-start gap-6 p-6 rounded-2xl bg-secondary/30 border border-border">
                   <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                     <GraduationCap className="w-10 h-10 text-primary" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-foreground">{course.instructor.name}</h3>
-                    <p className="text-primary font-medium mb-2">{course.instructor.role}</p>
-                    <p className="text-muted-foreground">{course.instructor.bio}</p>
+                    <h3 className="text-xl font-bold text-foreground">{instructor.name}</h3>
+                    <p className="text-primary font-medium mb-2">{instructor.role}</p>
+                    <p className="text-muted-foreground">{instructor.bio}</p>
                   </div>
                 </div>
-                
+
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="text-center p-6 rounded-xl bg-secondary/30 border border-border">
-                    <div className="text-3xl font-bold text-primary">{course.students.toLocaleString()}+</div>
+                    <div className="text-3xl font-bold text-primary">{course.students_count.toLocaleString()}+</div>
                     <p className="text-sm text-muted-foreground">Peserta Terlatih</p>
                   </div>
                   <div className="text-center p-6 rounded-xl bg-secondary/30 border border-border">
@@ -800,8 +493,8 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
                     <p className="text-sm text-muted-foreground">Rating Rata-rata</p>
                   </div>
                   <div className="text-center p-6 rounded-xl bg-secondary/30 border border-border">
-                    <div className="text-3xl font-bold text-primary">{course.curriculum.length}</div>
-                    <p className="text-sm text-muted-foreground">Modul Pembelajaran</p>
+                    <div className="text-3xl font-bold text-primary">10+</div>
+                    <p className="text-sm text-muted-foreground">Tahun Pengalaman</p>
                   </div>
                 </div>
               </div>
@@ -809,8 +502,103 @@ Mohon informasi lebih lanjut mengenai jadwal dan pembayaran. Terima kasih!`;
           </div>
         </div>
       </section>
+
+      {/* Registration Modal */}
+      {showRegistration && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-background rounded-2xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h2 className="text-xl font-bold text-foreground">Form Pendaftaran Kursus</h2>
+              <button
+                onClick={handleCloseRegistration}
+                className="p-2 hover:bg-secondary rounded-full transition-colors"
+                disabled={isSubmitting}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleRegistrationSubmit} className="p-6 space-y-6">
+              {/* Course Summary */}
+              <div className="bg-secondary/50 rounded-xl p-4">
+                <h3 className="font-semibold text-foreground mb-2">{course.title}</h3>
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                  <span>⏱ {course.duration}</span>
+                  <span>📊 {course.level}</span>
+                  <span>🎓 {course.type}</span>
+                </div>
+                <div className="mt-2 text-lg font-bold text-primary">{formatPrice(course.price)}</div>
+              </div>
+
+              {/* Registration Form */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">Nama Lengkap *</Label>
+                  <Input
+                    id="fullName"
+                    placeholder="Masukkan nama lengkap Anda"
+                    value={registrationForm.fullName}
+                    onChange={(e) => setRegistrationForm({ ...registrationForm, fullName: e.target.value })}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="email@contoh.com"
+                    value={registrationForm.email}
+                    onChange={(e) => setRegistrationForm({ ...registrationForm, email: e.target.value })}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Nomor Telepon *</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="08xxxxxxxxxx"
+                    value={registrationForm.phone}
+                    onChange={(e) => setRegistrationForm({ ...registrationForm, phone: e.target.value })}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Catatan (Opsional)</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Pertanyaan atau catatan tambahan..."
+                    value={registrationForm.notes}
+                    onChange={(e) => setRegistrationForm({ ...registrationForm, notes: e.target.value })}
+                    rows={3}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex gap-3">
+                <Button type="button" variant="outline" className="flex-1" onClick={handleCloseRegistration} disabled={isSubmitting}>
+                  Batal
+                </Button>
+                <Button type="submit" className="flex-1 bg-green-600 hover:bg-green-700 text-white" disabled={isSubmitting}>
+                  {isSubmitting ? "Memproses..." : "Daftar via WhatsApp"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 };
 
 export default CourseDetail;
+

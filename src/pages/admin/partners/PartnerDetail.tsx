@@ -18,6 +18,60 @@ const PartnerDetail = () => {
     const [partner, setPartner] = useState<Partner | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const handleVerify = async (partner: Partner) => {
+        try {
+            // Using the new custom action endpoint
+            const res = await api.post(`/partners/${partner.id}/verify/`);
+
+            setPartner({ ...partner, status: "Aktif" });
+
+            // Show credentials if returned
+            if (res.data.credentials) {
+                toast.success("Mitra diverifikasi & Akun dibuat", {
+                    description: `Email: ${res.data.credentials.email}, Password: ${res.data.credentials.password}`,
+                    duration: 10000, // Show longer so admin can copy
+                    action: {
+                        label: "Salin",
+                        onClick: () => {
+                            navigator.clipboard.writeText(`Email: ${res.data.credentials.email}\nPassword: ${res.data.credentials.password}`);
+                            toast.success("Kredensial disalin!");
+                        }
+                    }
+                });
+            } else {
+                toast.success(res.data.message || "Mitra berhasil diverifikasi");
+            }
+
+        } catch (error: any) {
+            console.error(error);
+            toast.error("Gagal memverifikasi mitra: " + (error.response?.data?.error || "Error"));
+        }
+    };
+
+    const handleReject = async (partner: Partner) => {
+        try {
+            await api.patch(`/partners/${partner.id}/`, { status: "Ditolak" });
+            toast.success("Pengajuan mitra ditolak");
+            setPartner({ ...partner, status: "Ditolak" });
+        } catch (error) {
+            console.error(error);
+            toast.error("Gagal menolak mitra");
+        }
+    };
+
+    const handleDelete = async (partner: Partner) => {
+        if (confirm("Apakah Anda yakin ingin menghapus mitra ini?")) {
+            try {
+                await api.delete(`/partners/${partner.id}/`);
+                toast.success("Mitra berhasil dihapus");
+                navigate("/admin/partners");
+            } catch (error) {
+                console.error(error);
+                toast.error("Gagal menghapus mitra");
+            }
+        }
+    };
+
     useEffect(() => {
         const fetchPartner = async () => {
             try {
@@ -125,10 +179,20 @@ const PartnerDetail = () => {
                     </div>
                 </div>
                 <div className="flex gap-2">
+                    {partner.status === 'Pending' && (
+                        <>
+                            <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700" onClick={() => handleVerify(partner)}>
+                                <CheckCircle2 className="h-4 w-4" /> Verifikasi
+                            </Button>
+                            <Button variant="destructive" className="gap-2" onClick={() => handleReject(partner)}>
+                                <XCircle className="h-4 w-4" /> Tolak
+                            </Button>
+                        </>
+                    )}
                     <Button variant="outline" className="gap-2" onClick={() => navigate(`/admin/partners/${partner.id}/edit`)}>
                         <Edit className="h-4 w-4" /> Edit
                     </Button>
-                    <Button variant="destructive" className="gap-2">
+                    <Button variant="destructive" className="gap-2" onClick={() => handleDelete(partner)}>
                         <Trash2 className="h-4 w-4" /> Hapus
                     </Button>
                 </div>

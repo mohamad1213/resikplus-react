@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import Layout from "@/components/layout/Layout";
 import { useToast } from "@/hooks/use-toast";
 import React from "react";
+import api from "@/lib/api";
+
 const partnerTypes = [
-  { id: "individual", label: "Individu", icon: User, description: "Freelancer dan profesional" },
-  { id: "sme", label: "UMKM", icon: Building2, description: "Usaha kecil dan menengah" },
-  { id: "organization", label: "Organisasi", icon: Users, description: "Institusi besar dan NGO" },
+  { id: "Individu", label: "Individu", icon: User, description: "Freelancer dan profesional" },
+  { id: "UMKM", label: "UMKM", icon: Building2, description: "Usaha kecil dan menengah" },
+  { id: "Organisasi", label: "Organisasi", icon: Users, description: "Institusi besar dan NGO" },
 ];
 
 const benefits = [
@@ -30,7 +32,7 @@ const Partners = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.partnerType) {
@@ -43,36 +45,39 @@ const Partners = () => {
 
     setIsSubmitting(true);
 
-    // Get partner type label
-    const partnerTypeLabel = partnerTypes.find(t => t.id === formData.partnerType)?.label || formData.partnerType;
+    try {
+      await api.post("/partners/", {
+        name: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        type: formData.partnerType,
+        description: formData.message,
+        status: "Pending",
+        location: "-" // Default location as it is required in backend but not in form
+      });
 
-    // Create WhatsApp message
-    const message = encodeURIComponent(
-      `🤝 *PENDAFTARAN MITRA BARU - RESIKPLUS*\n\n` +
-      `👤 *Data Calon Mitra:*\n` +
-      `Nama: ${formData.fullName.trim()}\n` +
-      `Email: ${formData.email.trim()}\n` +
-      `Telepon: ${formData.phone.trim()}\n` +
-      `Jenis Mitra: ${partnerTypeLabel}\n` +
-      `${formData.message.trim() ? `\n💬 *Pesan:*\n${formData.message.trim()}\n` : ""}` +
-      `\nSaya tertarik untuk bergabung sebagai mitra ResikPlus. Mohon informasi lebih lanjut. Terima kasih!`
-    );
+      toast({
+        title: "Pendaftaran Berhasil",
+        description: "Data Anda telah kami terima. Tim kami akan segera menghubungi Anda.",
+      });
 
-    window.open(`https://wa.me/6281288866107?text=${message}`, "_blank");
-
-    toast({
-      title: "Dialihkan ke WhatsApp",
-      description: "Silakan lanjutkan pendaftaran melalui WhatsApp.",
-    });
-
-    setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      partnerType: "",
-      message: "",
-    });
-    setIsSubmitting(false);
+      setFormData({
+        fullName: "",
+        email: "",
+        phone: "",
+        partnerType: "",
+        message: "",
+      });
+    } catch (error) {
+      console.error("Submission error:", error);
+      toast({
+        title: "Gagal Mendaftar",
+        description: "Terjadi kesalahan saat mengirim data. Silakan coba lagi.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -221,12 +226,11 @@ const Partners = () => {
                 />
               </div>
 
-              <Button type="submit" variant="whatsapp" size="xl" className="w-full" disabled={isSubmitting}>
-                <MessageCircle className="w-5 h-5" />
-                {isSubmitting ? "Mengirim..." : "Daftar via WhatsApp"}
+              <Button type="submit" size="xl" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Mengirim..." : "Daftar Mitra"}
               </Button>
               <p className="text-xs text-center text-muted-foreground">
-                Data pendaftaran akan dikirim ke WhatsApp untuk proses selanjutnya
+                Data pendaftaran akan diverifikasi oleh tim kami dalam 1-2 hari kerja.
               </p>
             </form>
           </div>

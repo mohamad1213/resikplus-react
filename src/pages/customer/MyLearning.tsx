@@ -1,19 +1,41 @@
+import { useState, useEffect } from "react";
 import { BookOpen, Clock, PlayCircle, CheckCircle, Award, Calendar } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { useCustomerAuth } from "@/contexts/CustomerAuthContext";
+import api from "@/lib/api";
 
 const MyLearning = () => {
   const navigate = useNavigate();
-  const { purchasedCourses } = useCustomerAuth();
+  const [activeCourses, setActiveCourses] = useState<any[]>([]);
+  const [completedCourses, setCompletedCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const activeCourses = purchasedCourses.filter(c => c.status === "active");
-  const completedCourses = purchasedCourses.filter(c => c.status === "completed");
+  useEffect(() => {
+    fetchMyCourses();
+  }, []);
 
-  if (purchasedCourses.length === 0) {
+  const fetchMyCourses = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/courses/my_courses/");
+      const courses = res.data;
+      setActiveCourses(courses.filter((c: any) => c.course_status === "in_progress" || c.status === "active"));
+      setCompletedCourses(courses.filter((c: any) => c.course_status === "completed" || c.status === "completed"));
+    } catch (error) {
+      console.error("Failed to fetch courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="p-8 text-center text-muted-foreground animate-pulse">Memuat kursus Anda...</div>;
+  }
+
+  if (activeCourses.length === 0 && completedCourses.length === 0) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4">
         <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-6">
@@ -104,8 +126,12 @@ const MyLearning = () => {
                 <CardContent className="p-0">
                   <div className="flex flex-col lg:flex-row">
                     {/* Course Image */}
-                    <div className="lg:w-64 h-48 lg:h-auto bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-                      <BookOpen className="w-16 h-16 text-primary/60" />
+                    <div className="lg:w-64 h-48 lg:h-auto bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center overflow-hidden">
+                      {course.image ? (
+                        <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <BookOpen className="w-16 h-16 text-primary/60" />
+                      )}
                     </div>
 
                     {/* Course Info */}
@@ -132,19 +158,19 @@ const MyLearning = () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          Akses hingga {new Date(course.accessUntil).toLocaleDateString("id-ID")}
+                          Akses hingga {new Date(new Date(course.enrolled_at).getTime() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString("id-ID")}
                         </span>
                       </div>
 
                       <div className="space-y-2 mb-4">
                         <div className="flex items-center justify-between text-sm">
-                          <span>Progress: {course.completedModules}/{course.totalModules} Modul</span>
-                          <span className="font-semibold">{course.progress}%</span>
+                          <span>Progress: {course.completed_modules || 0}/{course.modules?.length || 0} Modul</span>
+                          <span className="font-semibold">{course.progress || 0}%</span>
                         </div>
-                        <Progress value={course.progress} className="h-2" />
+                        <Progress value={course.progress || 0} className="h-2" />
                       </div>
 
-                      <Button className="gap-2">
+                      <Button className="gap-2" onClick={() => navigate(`/course/${course.id}/modules`)}>
                         <PlayCircle className="w-4 h-4" />
                         Lanjutkan Belajar
                       </Button>
@@ -178,7 +204,7 @@ const MyLearning = () => {
                       </Badge>
                       <h3 className="font-semibold truncate">{course.title}</h3>
                       <p className="text-sm text-muted-foreground">
-                        Diselesaikan pada {new Date(course.purchasedAt).toLocaleDateString("id-ID")}
+                        Diselesaikan pada {new Date(course.enrolled_at || Date.now()).toLocaleDateString("id-ID")}
                       </p>
                       <div className="flex gap-2 mt-3">
                         <Button size="sm" variant="outline" onClick={() => navigate("/customer/certificates")}>

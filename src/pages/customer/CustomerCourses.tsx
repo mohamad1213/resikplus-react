@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BookOpen,
   Clock,
@@ -6,6 +6,7 @@ import {
   CheckCircle,
   Filter,
   Search,
+  Loader2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,61 +15,42 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-
-// Demo data
-const allCourses = [
-  {
-    id: 1,
-    title: "Dasar-Dasar Pengelolaan Sampah",
-    progress: 75,
-    status: "in_progress",
-    nextLesson: "Modul 3: Pengolahan Dasar",
-    duration: "4 minggu",
-    totalModules: 4,
-    completedModules: 3,
-    enrolledAt: "2024-01-01",
-  },
-  {
-    id: 2,
-    title: "Teknik Daur Ulang Industri",
-    progress: 30,
-    status: "in_progress",
-    nextLesson: "Modul 2: Teknologi Pemrosesan",
-    duration: "6 minggu",
-    totalModules: 4,
-    completedModules: 1,
-    enrolledAt: "2024-01-05",
-  },
-  {
-    id: 6,
-    title: "Workshop Daur Ulang Komunitas",
-    progress: 100,
-    status: "completed",
-    nextLesson: "-",
-    duration: "2 minggu",
-    totalModules: 4,
-    completedModules: 4,
-    enrolledAt: "2023-12-01",
-    completedAt: "2023-12-14",
-  },
-];
+import api from "@/lib/api";
 
 const CustomerCourses = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [allCourses, setAllCourses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchMyCourses();
+  }, []);
+
+  const fetchMyCourses = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/courses/my_courses/");
+      setAllCourses(res.data);
+    } catch (error) {
+      console.error("Failed to fetch courses:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredCourses = allCourses.filter((course) => {
     const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesTab =
       activeTab === "all" ||
-      (activeTab === "in_progress" && course.status === "in_progress") ||
-      (activeTab === "completed" && course.status === "completed");
+      (activeTab === "in_progress" && course.course_status === "in_progress") ||
+      (activeTab === "completed" && course.course_status === "completed");
     return matchesSearch && matchesTab;
   });
 
-  const inProgressCount = allCourses.filter((c) => c.status === "in_progress").length;
-  const completedCount = allCourses.filter((c) => c.status === "completed").length;
+  const inProgressCount = allCourses.filter((c) => c.course_status === "in_progress").length;
+  const completedCount = allCourses.filter((c) => c.course_status === "completed").length;
 
   return (
     <div className="space-y-6">
@@ -125,8 +107,8 @@ const CustomerCourses = () => {
                   {activeTab === "all"
                     ? "Anda belum mengikuti kursus apapun."
                     : activeTab === "in_progress"
-                    ? "Tidak ada kursus yang sedang berlangsung."
-                    : "Anda belum menyelesaikan kursus apapun."}
+                      ? "Tidak ada kursus yang sedang berlangsung."
+                      : "Anda belum menyelesaikan kursus apapun."}
                 </p>
                 <Button onClick={() => navigate("/courses")}>
                   Mulai Belajar Sekarang
@@ -140,8 +122,12 @@ const CustomerCourses = () => {
                   <CardContent className="p-6">
                     <div className="flex flex-col lg:flex-row gap-6">
                       {/* Course Image */}
-                      <div className="w-full lg:w-48 h-32 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center">
-                        <BookOpen className="w-12 h-12 text-primary" />
+                      <div className="w-full lg:w-48 h-32 bg-gradient-to-br from-primary/20 to-primary/10 rounded-lg flex items-center justify-center overflow-hidden">
+                        {course.image ? (
+                          <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <BookOpen className="w-12 h-12 text-primary" />
+                        )}
                       </div>
 
                       {/* Course Info */}
@@ -156,19 +142,19 @@ const CustomerCourses = () => {
                               </span>
                               <span>•</span>
                               <span>
-                                {course.completedModules}/{course.totalModules} Modul
+                                {course.completed_modules}/{course.modules?.length || 0} Modul
                               </span>
                             </div>
                           </div>
                           <Badge
-                            variant={course.status === "completed" ? "default" : "secondary"}
+                            variant={course.course_status === "completed" ? "default" : "secondary"}
                             className={
-                              course.status === "completed"
+                              course.course_status === "completed"
                                 ? "bg-green-100 text-green-700 hover:bg-green-100"
                                 : ""
                             }
                           >
-                            {course.status === "completed" ? (
+                            {course.course_status === "completed" ? (
                               <>
                                 <CheckCircle className="w-3 h-3 mr-1" />
                                 Selesai
@@ -187,21 +173,20 @@ const CustomerCourses = () => {
                           </div>
                           <Progress
                             value={course.progress}
-                            className={`h-2 ${
-                              course.status === "completed" ? "[&>div]:bg-green-500" : ""
-                            }`}
+                            className={`h-2 ${course.course_status === "completed" ? "[&>div]:bg-green-500" : ""
+                              }`}
                           />
                         </div>
 
                         {/* Next Lesson / Actions */}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-2">
-                          {course.status === "in_progress" ? (
+                          {course.course_status === "in_progress" ? (
                             <>
                               <p className="text-sm text-muted-foreground">
                                 <span className="font-medium text-foreground">Selanjutnya:</span>{" "}
-                                {course.nextLesson}
+                                {course.next_lesson}
                               </p>
-                              <Button className="gap-2">
+                              <Button className="gap-2" onClick={() => navigate(`/course/${course.id}/modules`)}>
                                 <PlayCircle className="w-4 h-4" />
                                 Lanjutkan Belajar
                               </Button>
@@ -209,7 +194,7 @@ const CustomerCourses = () => {
                           ) : (
                             <>
                               <p className="text-sm text-muted-foreground">
-                                Selesai pada {new Date(course.completedAt!).toLocaleDateString("id-ID")}
+                                Selesai pada {new Date(course.enrolled_at).toLocaleDateString("id-ID")}
                               </p>
                               <div className="flex gap-2">
                                 <Button variant="outline" onClick={() => navigate("/customer/certificates")}>

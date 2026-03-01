@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, ArrowRight, BookOpen, Clock, CheckCircle, Play, 
-  FileText, Video, Award, ChevronLeft, ChevronRight, 
+import {
+  ArrowLeft, ArrowRight, BookOpen, Clock, CheckCircle, Play,
+  FileText, Video, Award, ChevronLeft, ChevronRight,
   Download, MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import Layout from "@/components/layout/Layout";
+import CustomerNavbar from "@/components/customer/CustomerNavbar";
 import { useToast } from "@/hooks/use-toast";
 
 // Course data (same as CourseModules)
@@ -41,34 +41,34 @@ Sampah adalah sisa kegiatan sehari-hari manusia dan/atau proses alam yang berben
 Selesaikan semua pelajaran di modul ini untuk melanjutkan ke modul berikutnya.
         `,
         lessons: [
-          { 
-            id: 1, 
-            title: "Definisi dan klasifikasi sampah", 
-            type: "video", 
+          {
+            id: 1,
+            title: "Definisi dan klasifikasi sampah",
+            type: "video",
             duration: "45 menit",
             content: "Video pembelajaran tentang definisi dan berbagai jenis klasifikasi sampah berdasarkan sumbernya.",
             completed: false
           },
-          { 
-            id: 2, 
-            title: "Dampak lingkungan", 
-            type: "video", 
+          {
+            id: 2,
+            title: "Dampak lingkungan",
+            type: "video",
             duration: "30 menit",
             content: "Penjelasan mengenai dampak negatif sampah terhadap ekosistem dan kesehatan manusia.",
             completed: false
           },
-          { 
-            id: 3, 
-            title: "Regulasi nasional", 
-            type: "document", 
+          {
+            id: 3,
+            title: "Regulasi nasional",
+            type: "document",
             duration: "20 menit",
             content: "Dokumen tentang UU No. 18 Tahun 2008 tentang Pengelolaan Sampah dan peraturan turunannya.",
             completed: false
           },
-          { 
-            id: 4, 
-            title: "Quiz Modul 1", 
-            type: "quiz", 
+          {
+            id: 4,
+            title: "Quiz Modul 1",
+            type: "quiz",
             duration: "15 menit",
             content: "Uji pemahaman Anda tentang materi pengenalan sampah.",
             completed: false
@@ -151,7 +151,7 @@ const getModuleData = (courseId: number, moduleId: number) => {
     const module = course.modules.find(m => m.id === moduleId);
     if (module) return { course, module };
   }
-  
+
   // Return default data
   return {
     course: {
@@ -201,15 +201,15 @@ const ModuleDetail = () => {
   const { id, moduleId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  
+
   const courseId = Number(id);
   const modId = Number(moduleId);
-  
+
   const { course, module } = getModuleData(courseId, modId);
   const [activeLesson, setActiveLesson] = useState(0);
   const [completedLessons, setCompletedLessons] = useState<number[]>([]);
   const [notes, setNotes] = useState("");
-  
+
   const currentLesson = module.lessons[activeLesson];
   const progress = (completedLessons.length / module.lessons.length) * 100;
 
@@ -221,7 +221,7 @@ const ModuleDetail = () => {
         description: `${currentLesson.title} telah ditandai selesai.`,
       });
     }
-    
+
     if (activeLesson < module.lessons.length - 1) {
       setActiveLesson(activeLesson + 1);
     }
@@ -250,15 +250,16 @@ const ModuleDetail = () => {
   };
 
   return (
-    <Layout>
+    <>
+      <CustomerNavbar />
       <div className="min-h-screen bg-background">
         {/* Header */}
         <div className="border-b border-border bg-card">
           <div className="container-wide py-4">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={() => navigate(`/course/${courseId}/modules`)}
                 >
@@ -299,14 +300,14 @@ const ModuleDetail = () => {
                       </p>
                       <p className="text-sm text-muted-foreground mt-1">
                         {currentLesson?.type === 'video' ? 'Video akan dimuat di sini' :
-                         currentLesson?.type === 'document' ? 'Dokumen akan ditampilkan' :
-                         currentLesson?.type === 'quiz' ? 'Quiz akan dimulai' :
-                         currentLesson?.type === 'exam' ? 'Ujian akan dimulai' :
-                         'Tugas akan ditampilkan'}
+                          currentLesson?.type === 'document' ? 'Dokumen akan ditampilkan' :
+                            currentLesson?.type === 'quiz' ? 'Quiz akan dimulai' :
+                              currentLesson?.type === 'exam' ? 'Ujian akan dimulai' :
+                                'Tugas akan ditampilkan'}
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-4">
                       <div>
@@ -328,7 +329,7 @@ const ModuleDetail = () => {
                         </Badge>
                       )}
                     </div>
-                    
+
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -369,7 +370,7 @@ const ModuleDetail = () => {
                   <TabsTrigger value="notes">Catatan</TabsTrigger>
                   <TabsTrigger value="discussion">Diskusi</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="overview" className="mt-4">
                   <Card>
                     <CardContent className="p-6 prose prose-sm max-w-none">
@@ -377,7 +378,7 @@ const ModuleDetail = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
-                
+
                 <TabsContent value="resources" className="mt-4">
                   <Card>
                     <CardContent className="p-6">
@@ -405,7 +406,7 @@ const ModuleDetail = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
-                
+
                 <TabsContent value="notes" className="mt-4">
                   <Card>
                     <CardContent className="p-6">
@@ -422,7 +423,7 @@ const ModuleDetail = () => {
                     </CardContent>
                   </Card>
                 </TabsContent>
-                
+
                 <TabsContent value="discussion" className="mt-4">
                   <Card>
                     <CardContent className="p-6">
@@ -452,18 +453,16 @@ const ModuleDetail = () => {
                       <button
                         key={lesson.id}
                         onClick={() => setActiveLesson(index)}
-                        className={`w-full p-4 text-left hover:bg-secondary/50 transition-colors ${
-                          activeLesson === index ? 'bg-secondary' : ''
-                        }`}
+                        className={`w-full p-4 text-left hover:bg-secondary/50 transition-colors ${activeLesson === index ? 'bg-secondary' : ''
+                          }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
-                            completedLessons.includes(index)
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${completedLessons.includes(index)
                               ? 'bg-green-100 text-green-600'
                               : activeLesson === index
-                              ? 'bg-primary text-primary-foreground'
-                              : 'bg-secondary text-muted-foreground'
-                          }`}>
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary text-muted-foreground'
+                            }`}>
                             {completedLessons.includes(index) ? (
                               <CheckCircle className="w-4 h-4" />
                             ) : (
@@ -471,9 +470,8 @@ const ModuleDetail = () => {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={`text-sm font-medium truncate ${
-                              activeLesson === index ? 'text-foreground' : 'text-muted-foreground'
-                            }`}>
+                            <p className={`text-sm font-medium truncate ${activeLesson === index ? 'text-foreground' : 'text-muted-foreground'
+                              }`}>
                               {lesson.title}
                             </p>
                             <p className="text-xs text-muted-foreground mt-0.5">
@@ -518,7 +516,7 @@ const ModuleDetail = () => {
           </div>
         </div>
       </div>
-    </Layout>
+    </>
   );
 };
 

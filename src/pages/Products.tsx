@@ -451,7 +451,7 @@ const Products = () => {
             Kami menawarkan solusi khusus untuk kebutuhan daur ulang spesifik Anda. Hubungi tim sales kami.
           </p>
           <Button variant="heroOutline" size="xl" asChild>
-            <a href="https://wa.me/6281288866107" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/6285156803370" target="_blank" rel="noopener noreferrer">
               <MessageCircle className="w-5 h-5" />
               Chat dengan Sales
             </a>

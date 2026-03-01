@@ -56,7 +56,7 @@ const Header = () => {
 
         <div className="hidden lg:flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <a href="https://wa.me/6281288866107" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/6285156803370" target="_blank" rel="noopener noreferrer">
               Hubungi Kami
             </a>
           </Button>
@@ -95,7 +95,7 @@ const Header = () => {
             ))}
             <div className="flex flex-col gap-2 pt-4 border-t border-border">
               <Button variant="outline" asChild>
-                <a href="https://wa.me/6281288866107" target="_blank" rel="noopener noreferrer">
+                <a href="https://wa.me/6285156803370" target="_blank" rel="noopener noreferrer">
                   Hubungi Kami
                 </a>
               </Button>

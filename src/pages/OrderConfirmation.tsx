@@ -53,7 +53,7 @@ const OrderConfirmation = () => {
     const orderDetails = orderData.items
       .map((item) => `• ${item.name} x${item.quantity} = ${formatPrice(item.price * item.quantity)}`)
       .join("\n");
-    
+
     const message = encodeURIComponent(
       `🛒 *KONFIRMASI PESANAN - RESIKPLUS*\n\n` +
       `📋 *No. Invoice: ${orderData.orderId}*\n` +
@@ -67,8 +67,8 @@ const OrderConfirmation = () => {
       `💰 *Total: ${formatPrice(orderData.total)}*\n\n` +
       `Mohon konfirmasi pesanan saya. Terima kasih!`
     );
-    
-    window.open(`https://wa.me/6281288866107?text=${message}`, "_blank");
+
+    window.open(`https://wa.me/6285156803370?text=${message}`, "_blank");
   };
 
   return (
@@ -89,7 +89,7 @@ const OrderConfirmation = () => {
           </div>
 
           {/* Invoice Card */}
-          <div 
+          <div
             ref={invoiceRef}
             className="bg-background rounded-2xl shadow-lg border border-border overflow-hidden print:shadow-none print:border-0"
           >
@@ -163,7 +163,7 @@ const OrderConfirmation = () => {
                 <Package className="w-5 h-5 text-primary" />
                 Detail Pesanan
               </h3>
-              
+
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
@@ -199,7 +199,7 @@ const OrderConfirmation = () => {
               <p className="text-sm text-muted-foreground text-center">
                 Silakan konfirmasi pesanan Anda melalui WhatsApp untuk proses pembayaran dan pengiriman.
                 <br />
-                Hubungi kami: <span className="font-medium text-foreground">+62 812 8886 6107</span>
+                Hubungi kami: <span className="font-medium text-foreground">+62 851-5680-3370</span>
               </p>
             </div>
           </div>

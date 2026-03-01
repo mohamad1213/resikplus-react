@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { 
-  ArrowLeft, BookOpen, Clock, CheckCircle, Play, 
+import {
+  ArrowLeft, BookOpen, Clock, CheckCircle, Play,
   ChevronRight, FileText, Video, Award
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import Layout from "@/components/layout/Layout";
+import CustomerNavbar from "@/components/customer/CustomerNavbar";
 
 // Course data with detailed modules
 const coursesData = [
@@ -126,7 +126,7 @@ const coursesData = [
 const getCourseModules = (courseId: number) => {
   const course = coursesData.find(c => c.id === courseId);
   if (course) return course;
-  
+
   // Generate default modules for courses not in detailed data
   return {
     id: courseId,
@@ -224,11 +224,12 @@ const CourseModules = () => {
   }, 0);
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-background">
+      <CustomerNavbar />
       <section className="section-padding bg-gradient-to-b from-sky-light/50 to-background">
         <div className="container-wide">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="mb-6"
             onClick={() => navigate(`/course/${courseId}`)}
           >
@@ -291,7 +292,7 @@ const CourseModules = () => {
                             </span>
                           </div>
                         </div>
-                        <Button 
+                        <Button
                           onClick={() => navigate(`/course/${courseId}/module/${module.id}`)}
                           className="shrink-0"
                         >
@@ -304,7 +305,7 @@ const CourseModules = () => {
                       <div className="border-t border-border pt-4">
                         <div className="grid gap-2">
                           {module.lessons.slice(0, 3).map((lesson) => (
-                            <div 
+                            <div
                               key={lesson.id}
                               className="flex items-center justify-between p-2 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
                             >
@@ -335,7 +336,7 @@ const CourseModules = () => {
           </div>
         </div>
       </section>
-    </Layout>
+    </div>
   );
 };
 

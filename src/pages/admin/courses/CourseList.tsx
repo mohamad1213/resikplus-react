@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "@/lib/api";
+import CourseRegistrationsTab from "./CourseRegistrationsTab";
 
 export interface Course {
   id: number;
@@ -145,164 +147,184 @@ const CourseList = () => {
   const formatPrice = (price: string) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(parseFloat(price));
 
   return (
-    <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Kursus</CardTitle>
-            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{courses.length}</div>
-            <p className="text-xs text-muted-foreground">Aktif</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Peserta</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalStudents.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">Terdaftar</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Pelajaran</CardTitle>
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalLessons}</div>
-            <p className="text-xs text-muted-foreground">Di semua kursus</p>
-          </CardContent>
-        </Card>
-        {/* Placeholder for certificates or other metric */}
+    <Tabs defaultValue="course-registrations" className="space-y-6">
+      <div className="flex items-center justify-between">
+        <TabsList>
+          <TabsTrigger value="course-registrations">Course Registrations</TabsTrigger>
+          <TabsTrigger value="courses">Courses</TabsTrigger>
+        </TabsList>
       </div>
 
-      {/* Courses Grid */}
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between gap-4">
-            <CardTitle>Daftar Kursus</CardTitle>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Cari kursus..."
-                  className="pl-9 w-full sm:w-64"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+      {/* Registrations Tab */}
+      <TabsContent value="course-registrations">
+        <CourseRegistrationsTab />
+      </TabsContent>
+
+      {/* Courses Tab */}
+      <TabsContent value="courses" className="space-y-6">
+        {/* Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Kursus</CardTitle>
+              <GraduationCap className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{courses.length}</div>
+              <p className="text-xs text-muted-foreground">Aktif</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Peserta</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalStudents.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Terdaftar</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Total Pelajaran</CardTitle>
+              <BookOpen className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalLessons}</div>
+              <p className="text-xs text-muted-foreground">Di semua kursus</p>
+            </CardContent>
+          </Card>
+          {/* Placeholder for certificates or other metric */}
+        </div>
+
+        {/* Courses Grid */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row justify-between gap-4">
+              <CardTitle>Daftar Kursus</CardTitle>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Cari kursus..."
+                    className="pl-9 w-full sm:w-64"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Link to="/admin/courses/create">
+                  <Button className="gap-2 w-full sm:w-auto">
+                    <Plus className="h-4 w-4" />
+                    Tambah Kursus
+                  </Button>
+                </Link>
               </div>
-              <Link to="/admin/courses/create">
-                <Button className="gap-2 w-full sm:w-auto">
-                  <Plus className="h-4 w-4" />
-                  Tambah Kursus
-                </Button>
-              </Link>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {courses.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-muted-foreground">Belum ada kursus. Silakan tambahkan kursus baru.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredCourses.map((course) => (
-                <Card key={course.id} className="overflow-hidden">
-                  <div className="h-32 bg-gray-100 flex items-center justify-center relative">
-                    {course.thumbnail ? (
-                      <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <GraduationCap className="h-12 w-12 text-gray-400" />
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div className="flex gap-1 flex-wrap">
-                        <Badge className={getStatusColor(course.status)} variant="secondary">
-                          {course.status}
-                        </Badge>
-                        <Badge className={getCategoryColor(course.category)} variant="secondary">
-                          {course.category}
-                        </Badge>
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-popover">
-                          <DropdownMenuItem asChild>
-                            <Link to={`/admin/courses/${course.id}`}>
-                              <Eye className="mr-2 h-4 w-4" /> Lihat Detail
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link to={`/admin/courses/${course.id}/edit`}>
-                              <Edit className="mr-2 h-4 w-4" /> Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(course)}>
-                            <Trash2 className="mr-2 h-4 w-4" /> Hapus
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+          </CardHeader>
+          <CardContent>
+            {courses.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">Belum ada kursus. Silakan tambahkan kursus baru.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredCourses.map((course) => (
+                  <Card key={course.id} className="overflow-hidden">
+                    <div className="h-32 bg-gray-100 flex items-center justify-center relative">
+                      {course.thumbnail ? (
+                        <img src={course.thumbnail} alt={course.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <GraduationCap className="h-12 w-12 text-gray-400" />
+                      )}
                     </div>
-                    <h3 className="font-semibold line-clamp-2 mb-1">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{course.subtitle || course.description}</p>
-                    <p className="text-xs text-muted-foreground mb-3">By {course.instructor}</p>
-                    <div className="font-bold text-primary mb-2">{formatPrice(course.price)}</div>
-
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Progress konten</span>
-                        <span className="font-medium">{course.progress}%</span>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex gap-1 flex-wrap">
+                          <Badge className={getStatusColor(course.status)} variant="secondary">
+                            {course.status}
+                          </Badge>
+                          <Badge className={getCategoryColor(course.category)} variant="secondary">
+                            {course.category}
+                          </Badge>
+                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-popover">
+                            <DropdownMenuItem asChild>
+                              <Link to={`/admin/courses/${course.id}`}>
+                                <Eye className="mr-2 h-4 w-4" /> Lihat Detail
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link to={`/admin/courses/${course.id}/edit`}>
+                                <Edit className="mr-2 h-4 w-4" /> Edit
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link to={`/admin/courses/${course.id}/modules`}>
+                                <Layers className="mr-2 h-4 w-4" /> Kelola Modul
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(course)}>
+                              <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <Progress value={course.progress} className="h-2" />
-                    </div>
+                      <h3 className="font-semibold line-clamp-2 mb-1">{course.title}</h3>
+                      <p className="text-sm text-muted-foreground line-clamp-1 mb-2">{course.subtitle || course.description}</p>
+                      <p className="text-xs text-muted-foreground mb-3">By {course.instructor}</p>
+                      <div className="font-bold text-primary mb-2">{formatPrice(course.price)}</div>
 
-                    <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        <span>{course.students} peserta</span>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Progress konten</span>
+                          <span className="font-medium">{course.progress}%</span>
+                        </div>
+                        <Progress value={course.progress} className="h-2" />
                       </div>
-                      <div className="flex items-center gap-1">
-                        <BookOpen className="h-4 w-4" />
-                        <span>{course.lessons} pelajaran</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
-      {/* Delete Dialog */}
-      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus Kursus?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tindakan ini tidak dapat dibatalkan. Kursus "{deleteCourse?.title}" akan dihapus permanen.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
-              Hapus
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+                      <div className="flex items-center justify-between mt-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          <span>{course.students} peserta</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <BookOpen className="h-4 w-4" />
+                          <span>{course.lessons} pelajaran</span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Delete Dialog */}
+        <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Hapus Kursus?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tindakan ini tidak dapat dibatalkan. Kursus "{deleteCourse?.title}" akan dihapus permanen.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground">
+                Hapus
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </TabsContent>
+    </Tabs>
   );
 };
 

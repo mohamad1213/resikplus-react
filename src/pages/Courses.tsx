@@ -113,12 +113,13 @@ const Courses = () => {
 
     try {
       // 1. Save registration to backend
-      await api.post(`/courses/${selectedCourse.id}/register/`, {
+      const res = await api.post(`/courses/${selectedCourse.id}/register/`, {
         full_name: registrationForm.fullName,
         email: registrationForm.email,
         phone: registrationForm.phone,
         notes: registrationForm.notes
       });
+      const generatedPassword = res.data.generated_password;
 
       // 2. Construct WhatsApp Message
       const message = `Halo Admin ResikPlus, saya ingin mendaftar kursus berikut:\n\n` +
@@ -128,10 +129,11 @@ const Courses = () => {
         `Nama: ${registrationForm.fullName}\n` +
         `Email: ${registrationForm.email}\n` +
         `No HP: ${registrationForm.phone}\n` +
+        `Password Sementara: ${generatedPassword}\n` +
         `Catatan: ${registrationForm.notes || '-'}\n\n` +
         `Mohon info pembayaran selanjutnya. Terima kasih.`;
 
-      const waUrl = `https://wa.me/6281288866107?text=${encodeURIComponent(message)}`;
+      const waUrl = `https://wa.me/6285156803370?text=${encodeURIComponent(message)}`;
 
       // 3. Close modal and redirect
       handleCloseRegistration();
@@ -142,11 +144,12 @@ const Courses = () => {
         description: "Anda akan dialihkan ke WhatsApp untuk konfirmasi pembayaran.",
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration failed:", error);
+      const errorMsg = error.response?.data?.detail || error.response?.data?.email?.[0] || "Terjadi kesalahan sistem. Silakan coba lagi.";
       toast({
         title: "Pendaftaran Gagal",
-        description: "Terjadi kesalahan sistem. Silakan coba lagi.",
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
@@ -277,7 +280,7 @@ const Courses = () => {
             Kami menawarkan program pelatihan yang disesuaikan untuk organisasi. Hubungi kami untuk mendiskusikan kebutuhan Anda.
           </p>
           <Button variant="heroOutline" size="xl" asChild>
-            <a href="https://wa.me/6281288866107" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/6285156803370" target="_blank" rel="noopener noreferrer">
               Hubungi Kami <ArrowRight className="w-5 h-5" />
             </a>
           </Button>

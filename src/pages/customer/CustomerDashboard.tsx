@@ -17,27 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
 
-// Demo data - akan diganti dengan data dari database
-const enrolledCourses = [
-  {
-    id: 1,
-    title: "Dasar-Dasar Pengelolaan Sampah",
-    progress: 75,
-    status: "in_progress",
-    nextLesson: "Modul 3: Pengolahan Dasar",
-    duration: "4 minggu",
-    image: "/placeholder.svg",
-  },
-  {
-    id: 2,
-    title: "Teknik Daur Ulang Industri",
-    progress: 30,
-    status: "in_progress",
-    nextLesson: "Modul 2: Teknologi Pemrosesan",
-    duration: "6 minggu",
-    image: "/placeholder.svg",
-  },
-];
+import api from "@/lib/api";
 
 const recentActivities = [
   { id: 1, action: "Menyelesaikan modul", course: "Pengelolaan Sampah", time: "2 jam lalu" },
@@ -68,6 +48,22 @@ const CustomerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useUserRole();
   const userName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Learner";
+
+  const [enrolledCourses, setEnrolledCourses] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchMyCourses();
+  }, []);
+
+  const fetchMyCourses = async () => {
+    try {
+      const res = await api.get("/courses/my_courses/");
+      // Grab top 3 courses for dashboard
+      setEnrolledCourses(res.data.slice(0, 3));
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   const stats = [
     {
@@ -168,8 +164,12 @@ const CustomerDashboard = () => {
               <Card key={course.id} className="hover:shadow-lg transition-shadow">
                 <CardContent className="p-5">
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <div className="w-full sm:w-32 h-24 bg-muted rounded-lg flex items-center justify-center">
-                      <BookOpen className="w-10 h-10 text-muted-foreground" />
+                    <div className="w-full sm:w-32 h-24 bg-muted rounded-lg flex items-center justify-center overflow-hidden">
+                      {course.image ? (
+                        <img src={course.image} alt={course.title} className="w-full h-full object-cover" />
+                      ) : (
+                        <BookOpen className="w-10 h-10 text-muted-foreground" />
+                      )}
                     </div>
                     <div className="flex-1 space-y-3">
                       <div className="flex items-start justify-between gap-2">
@@ -197,9 +197,9 @@ const CustomerDashboard = () => {
 
                       <div className="flex items-center justify-between">
                         <p className="text-sm text-muted-foreground">
-                          Selanjutnya: {course.nextLesson}
+                          Selanjutnya: {course.next_lesson}
                         </p>
-                        <Button size="sm" className="gap-2">
+                        <Button size="sm" className="gap-2" onClick={() => navigate(`/course/${course.id}/modules`)}>
                           <PlayCircle className="w-4 h-4" />
                           Lanjutkan
                         </Button>
