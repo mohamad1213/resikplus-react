@@ -29,11 +29,11 @@ Marketplace khusus untuk peralatan daur ulang dan produk hasil olahan sampah, me
 - **Bahasa**: [TypeScript](https://www.typescriptlang.org/)
 - **Styling**: [Tailwind CSS](https://tailwindcss.com/) & [shadcn/ui](https://ui.shadcn.com/)
 - **State Management**: [TanStack Query (React Query)](https://tanstack.com/query/latest)
-- **Backend Service**: [Supabase](https://supabase.com/) (Auth, Database, Storage)
+- **Backend Service**: [Django](https://www.djangoproject.com/) (Auth, Database, Storage)
 
 ### Backend
 - **Framework**: [Django](https://www.djangoproject.com/) (Python)
-- **Database**: PostgreSQL (via Supabase)
+- **Database**: PostgreSQL 
 
 ## 📁 Struktur Direktori
 
