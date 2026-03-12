@@ -1,6 +1,6 @@
 # ResikPlus - Solusi Kebersihan Lingkungan & Daur Ulang Indonesia
 
-![ResikPlus Landing Page](./screenshots/landing.png)
+![ResikPlus Landing Page](screenshots/landing.png)
 
 ## 🌿 Tentang ResikPlus
 
