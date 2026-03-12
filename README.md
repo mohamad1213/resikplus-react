@@ -1,4 +1,3 @@
-![alt text](?raw=true)
 # ResikPlus - Solusi Kebersihan Lingkungan & Daur Ulang Indonesia
 
 ![ResikPlus Landing Page](./screenshots/landing.png)
